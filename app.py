@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request
 import boto3
 import pymysql
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
@@ -23,8 +25,26 @@ def upload_document():
         return "No file uploaded", 400
     
     file = request.files['document']
-    # TODO: Add Boto3 S3 upload logic here next week
-    return f"Successfully received {file.filename} (S3 upload pending)"
+    if file.filename == '':
+        return "No selected file", 400
+        
+    # Secure the filename and save it temporarily to the EC2 instance
+    filename = secure_filename(file.filename)
+    file.save(filename)
+    
+    try:
+        # Connect to S3 and upload the file
+        s3 = boto3.client('s3', region_name='us-east-1')
+        bucket_name = 'YOUR_BUCKET_NAME_HERE'
+        
+        s3.upload_file(filename, bucket_name, filename)
+        
+        # Delete the temporary file from the EC2 hard drive
+        os.remove(filename)
+        
+        return f"Successfully uploaded {filename} to S3!"
+    except Exception as e:
+        return f"S3 Upload Failed: {str(e)}"
 
 if __name__ == '__main__':
     # Running on 0.0.0.0 ensures it works when deployed to the EC2 server
