@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import boto3
 import pymysql
 import os
@@ -11,41 +11,67 @@ app = Flask(__name__)
 
 @app.route('/')
 def dashboard():
-    # Midpoint Hack: Use mock data until your RDS database is live
+    # Rich maritime mock data until RDS is live
     mock_containers = [
-        {"id": "MSKU1234567", "cutoff": "2026-10-18 14:00", "status": "Pending"},
-        {"id": "HLXU9876543", "cutoff": "2026-10-17 09:00", "status": "Cleared"}
+        {
+            "id": "MSKU1234567",
+            "vessel": "Maersk Mc-Kinney Møller",
+            "route": "USHOU → NLRTM",
+            "cutoff": "2026-10-18 14:00",
+            "status": "Pending"
+        },
+        {
+            "id": "HLXU9876543",
+            "vessel": "Hapag-Lloyd Berlin Express",
+            "route": "USSAV → DEHAM",
+            "cutoff": "2026-10-17 09:00",
+            "status": "Cleared"
+        },
+        {
+            "id": "CMAU4491028",
+            "vessel": "CMA CGM Jacques Saadé",
+            "route": "USLAX → SGSIN",
+            "cutoff": "2026-10-15 16:30",
+            "status": "Urgent"
+        },
+        {
+            "id": "OOLU8832104",
+            "vessel": "OOCL Hong Kong",
+            "route": "USNYC →CNSHA",
+            "cutoff": "2026-10-21 11:00",
+            "status": "Cleared"
+        }
     ]
-    # This sends the data to your dashboard.html file to be displayed
     return render_template('dashboard.html', containers=mock_containers)
 
 @app.route('/upload', methods=['POST'])
 def upload_document():
     if 'document' not in request.files:
-        return "No file uploaded", 400
+        return jsonify({"success": False, "message": "No file uploaded"}), 400
     
     file = request.files['document']
     if file.filename == '':
-        return "No selected file", 400
+        return jsonify({"success": False, "message": "No selected file"}), 400
         
-    # Secure the filename and save it temporarily to the EC2 instance
     filename = secure_filename(file.filename)
     file.save(filename)
     
     try:
-        # Connect to S3 and upload the file
         s3 = boto3.client('s3', region_name='us-east-1')
-        bucket_name = 'YOUR_BUCKET_NAME_HERE'
+        bucket_name = 'YOUR_BUCKET_NAME_HERE'  # <-- Keep your exact S3 bucket name here
         
         s3.upload_file(filename, bucket_name, filename)
-        
-        # Delete the temporary file from the EC2 hard drive
         os.remove(filename)
         
-        return f"Successfully uploaded {filename} to S3!"
+        return jsonify({
+            "success": True,
+            "filename": filename,
+            "message": f"Encrypted & vaulted {filename} to Amazon S3"
+        })
     except Exception as e:
-        return f"S3 Upload Failed: {str(e)}"
+        if os.path.exists(filename):
+            os.remove(filename)
+        return jsonify({"success": False, "message": f"S3 Upload Failed: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    # Running on 0.0.0.0 ensures it works when deployed to the EC2 server
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8080, debug=True)

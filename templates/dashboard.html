@@ -1,170 +1,404 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ocean Export Tracker | Premium</title>
-    <!-- Bootstrap 5 for structure -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>OceanTracker OS | Maritime Cut-Off Command</title>
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --primary-glow: #00f2fe;
-            --secondary-glow: #4facfe;
-            --bg-color: #0b0f19;
-            --glass-bg: rgba(255, 255, 255, 0.03);
+            --bg-deep: #060911;
+            --glass-surface: rgba(15, 23, 42, 0.65);
             --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.14);
+            --accent-cyan: #00f2fe;
+            --accent-blue: #4facfe;
+            --text-main: #f8fafc;
+            --text-secondary: #94a3b8;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-deep);
             background-image: 
-                radial-gradient(at 0% 0%, rgba(79, 172, 254, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(0, 242, 254, 0.1) 0px, transparent 50%);
+                radial-gradient(circle at 12% 18%, rgba(79, 172, 254, 0.14) 0%, transparent 42%),
+                radial-gradient(circle at 88% 82%, rgba(0, 242, 254, 0.10) 0%, transparent 45%),
+                linear-gradient(180deg, #060911 0%, #0b1120 100%);
             background-attachment: fixed;
-            color: #e2e8f0;
+            color: var(--text-main);
             min-height: 100vh;
+            padding-bottom: 4rem;
         }
 
-        /* Glassmorphism Cards */
-        .glass-card {
-            background: var(--glass-bg);
+        /* Top Command Bar */
+        .navbar-glass {
+            background: rgba(6, 9, 17, 0.8);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        }
-
-        .navbar {
-            background: rgba(11, 15, 25, 0.8) !important;
-            backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--glass-border);
         }
 
-        .navbar-brand {
+        .brand-logo {
             font-weight: 700;
-            letter-spacing: 1px;
-            background: -webkit-linear-gradient(45deg, var(--secondary-glow), var(--primary-glow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+            font-size: 1.35rem;
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Custom Table Styling */
-        .table {
-            color: #cbd5e1;
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #060911;
+            font-size: 1.1rem;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.35);
+        }
+
+        .status-pill {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            color: #34d399;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.45; transform: scale(1.2); }
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--glass-surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+            transition: border-color 0.25s ease, transform 0.25s ease;
+        }
+
+        .glass-card:hover {
+            border-color: var(--glass-highlight);
+        }
+
+        /* KPI Summary Cards */
+        .kpi-card {
+            padding: 1.35rem 1.5rem;
+        }
+
+        .kpi-label {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }
+
+        .kpi-value {
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 4px;
+            line-height: 1.1;
+        }
+
+        .kpi-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        /* Fix Bootstrap 5.3 White Table Override */
+        .table-ocean {
+            --bs-table-bg: transparent !important;
+            --bs-table-striped-bg: transparent !important;
+            --bs-table-hover-bg: rgba(255, 255, 255, 0.04) !important;
+            --bs-table-color: var(--text-main) !important;
+            border-color: var(--glass-border) !important;
             margin-bottom: 0;
         }
-        
-        .table-hover tbody tr:hover {
-            background-color: rgba(255, 255, 255, 0.05);
+
+        .table-ocean thead th {
+            background: rgba(255, 255, 255, 0.02) !important;
+            color: var(--text-secondary) !important;
+            font-size: 0.74rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--glass-border) !important;
+        }
+
+        .table-ocean tbody td {
+            background: transparent !important;
+            color: var(--text-main) !important;
+            padding: 18px 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .table-ocean tbody tr:last-child td {
+            border-bottom: none !important;
+        }
+
+        .container-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            font-size: 0.96rem;
+            color: var(--accent-cyan);
+            background: rgba(0, 242, 254, 0.08);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            padding: 5px 10px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        /* Status Badges */
+        .badge-status {
+            padding: 6px 13px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-cleared {
+            background: rgba(16, 185, 129, 0.14);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.14);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+
+        .status-urgent {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        /* Custom Drag & Drop Zone */
+        .upload-dropzone {
+            border: 1.5px dashed rgba(79, 172, 254, 0.35);
+            background: rgba(15, 23, 42, 0.45);
+            border-radius: 14px;
+            padding: 2rem 1.25rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .upload-dropzone:hover, .upload-dropzone.dragover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 242, 254, 0.06);
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.1);
+        }
+
+        .upload-dropzone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Buttons & Inputs */
+        .btn-glow {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            border: none;
+            color: #060911;
+            font-weight: 700;
+            border-radius: 11px;
+            padding: 12px 18px;
+            transition: all 0.25s ease;
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(0, 242, 254, 0.35);
+            color: #060911;
+        }
+
+        .search-input {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            border-radius: 10px;
+            font-size: 0.86rem;
+            padding: 8px 14px;
+        }
+
+        .search-input:focus {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.15);
             color: #fff;
         }
 
-        .table thead th {
-            border-bottom: 1px solid var(--glass-border);
-            color: #94a3b8;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 0.5px;
-            padding-bottom: 15px;
-        }
-
-        .table td {
-            border-bottom: 1px solid var(--glass-border);
-            padding: 15px 10px;
-            vertical-align: middle;
-        }
-
-        /* Gradient Badges */
-        .badge-cleared {
-            background: linear-gradient(45deg, #10b981, #059669);
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
-            color: white;
-        }
-
-        .badge-pending {
-            background: linear-gradient(45deg, #f59e0b, #d97706);
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
-            color: white;
-        }
-
-        /* Premium Input & Button */
-        .form-control {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px dashed rgba(255, 255, 255, 0.2);
-            color: white;
-            border-radius: 8px;
-            padding: 12px;
-        }
-        
-        .form-control:focus {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--secondary-glow);
-            box-shadow: 0 0 0 0.25rem rgba(79, 172, 254, 0.25);
-            color: white;
-        }
-
-        .btn-premium {
-            background: linear-gradient(45deg, var(--secondary-glow), var(--primary-glow));
-            border: none;
-            color: #000;
-            font-weight: 700;
-            border-radius: 8px;
-            padding: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-premium:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+        .vault-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.82rem;
         }
     </style>
 </head>
 <body>
 
-<!-- Premium Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark py-3 mb-5">
+<!-- Top Navigation -->
+<nav class="navbar navbar-glass py-3 mb-4 sticky-top">
     <div class="container">
-        <a class="navbar-brand fs-4" href="#">OceanTracker OS</a>
+        <a class="brand-logo" href="#">
+            <span class="brand-icon"><i class="bi bi-tsunami"></i></span>
+            <span>OceanTracker <span style="font-weight:400; color: var(--accent-cyan);">OS</span></span>
+        </a>
+        <div class="d-flex align-items-center gap-3">
+            <div class="status-pill">
+                <span class="pulse-dot"></span>
+                AWS S3 Vault Connected
+            </div>
+            <button class="btn btn-sm btn-outline-light rounded-3 px-3 py-2" data-bs-toggle="modal" data-bs-target="#addShipmentModal">
+                <i class="bi bi-plus-lg me-1"></i> New Container
+            </button>
+        </div>
     </div>
 </nav>
 
 <div class="container">
+    <!-- Top Row: Executive KPI Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="glass-card kpi-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="kpi-label">Active Export Units</div>
+                    <div class="kpi-value" id="totalCount">{{ containers|length }}</div>
+                    <div class="small mt-1" style="color: #34d399;"><i class="bi bi-arrow-up-right"></i> Live Port Telemetry</div>
+                </div>
+                <div class="kpi-icon" style="background: rgba(79, 172, 254, 0.15); color: var(--accent-blue);">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-card kpi-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="kpi-label">Pending Port Cut-Off</div>
+                    <div class="kpi-value">2</div>
+                    <div class="small mt-1" style="color: #fbbf24;"><i class="bi bi-clock-history"></i> Requires VGM / Customs</div>
+                </div>
+                <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="glass-card kpi-card d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="kpi-label">S3 Vaulted Documents</div>
+                    <div class="kpi-value" id="vaultCount">14</div>
+                    <div class="small mt-1" style="color: var(--text-secondary);"><i class="bi bi-shield-check text-info"></i> IAM Role Authenticated</div>
+                </div>
+                <div class="kpi-icon" style="background: rgba(0, 242, 254, 0.14); color: var(--accent-cyan);">
+                    <i class="bi bi-cloud-check"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
     <div class="row g-4">
-        <!-- Left Column: Container Tracker -->
+        <!-- Left Column: Active Shipments Table -->
         <div class="col-lg-8">
             <div class="glass-card p-4 h-100">
-                <h5 class="fw-bold mb-4" style="color: #fff;">Active Shipments</h5>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                    <div>
+                        <h5 class="fw-bold mb-1 text-white">Active Container Cut-Offs</h5>
+                        <p class="small mb-0" style="color: var(--text-secondary);">Real-time CY & documentation deadlines across global terminals</p>
+                    </div>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search container, vessel, port...">
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-ocean table-hover align-middle" id="shipmentTable">
                         <thead>
                             <tr>
                                 <th>Container ID</th>
-                                <th>Cut-off Date</th>
-                                <th>Status</th>
+                                <th>Vessel & Route</th>
+                                <th>Terminal Cut-Off</th>
+                                <th>Gate Status</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Jinja2 loop from your Python backend -->
+                        <tbody id="shipmentTableBody">
                             {% for container in containers %}
                             <tr>
                                 <td>
-                                    <span class="fw-bold" style="color: #e2e8f0; font-family: monospace; font-size: 1.1rem;">
-                                        {{ container.id }}
-                                    </span>
+                                    <span class="container-id">{{ container.id }}</span>
                                 </td>
-                                <td>{{ container.cutoff }}</td>
                                 <td>
-                                    <!-- Premium Dynamic Badges -->
+                                    <div class="fw-semibold text-white">{{ container.vessel | default('Maersk Eindhoven') }}</div>
+                                    <div class="small" style="color: var(--text-secondary);">
+                                        <i class="bi bi-geo-alt text-info me-1"></i>{{ container.route | default('USHOU → NLRTM') }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-medium text-white">{{ container.cutoff }}</div>
+                                    <div class="small countdown-timer" data-cutoff="{{ container.cutoff }}" style="color: var(--text-secondary);">
+                                        Calculating window...
+                                    </div>
+                                </td>
+                                <td>
                                     {% if container.status == 'Cleared' %}
-                                        <span class="badge badge-cleared rounded-pill px-3 py-2 fw-semibold">Cleared</span>
+                                        <span class="badge-status status-cleared">
+                                            <i class="bi bi-check-circle-fill"></i> Cleared
+                                        </span>
+                                    {% elif container.status == 'Urgent' %}
+                                        <span class="badge-status status-urgent">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Urgent
+                                        </span>
                                     {% else %}
-                                        <span class="badge badge-pending rounded-pill px-3 py-2 fw-semibold">Pending</span>
+                                        <span class="badge-status status-pending">
+                                            <i class="bi bi-clock-fill"></i> Pending
+                                        </span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -175,23 +409,223 @@
             </div>
         </div>
 
-        <!-- Right Column: S3 Upload -->
+        <!-- Right Column: S3 Document Vault -->
         <div class="col-lg-4">
-            <div class="glass-card p-4 h-100">
-                <h5 class="fw-bold mb-4" style="color: #fff;">Document Vault</h5>
-                <p class="small text-muted mb-4">Securely push customs and load plans to Amazon S3.</p>
-                
-                <form action="/upload" method="POST" enctype="multipart/form-data">
-                    <div class="mb-4">
-                        <label for="document" class="form-label text-light small fw-semibold">Select File</label>
-                        <input class="form-control" type="file" id="document" name="document" required>
+            <div class="glass-card p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h5 class="fw-bold mb-0 text-white">S3 Document Vault</h5>
+                        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">us-east-1</span>
                     </div>
-                    <button type="submit" class="btn btn-premium w-100">Upload to Cloud</button>
-                </form>
+                    <p class="small mb-4" style="color: var(--text-secondary);">
+                        Securely stream Commercial Invoices, Packing Lists, and Bills of Lading directly to Amazon S3.
+                    </p>
+                    
+                    <form id="s3UploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+                        <div class="upload-dropzone mb-3" id="dropzone">
+                            <input type="file" id="document" name="document" required>
+                            <i class="bi bi-cloud-arrow-up fs-1" style="color: var(--accent-cyan);"></i>
+                            <div class="fw-semibold text-white mt-2" id="fileNameDisplay">Drop shipping manifest or click to browse</div>
+                            <div class="small mt-1" style="color: var(--text-secondary);">Supports PDF, PNG, JPG, XLSX (Max 25MB)</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-glow w-100" id="uploadBtn">
+                            <i class="bi bi-lock-fill me-1"></i> Upload to S3 Cloud Vault
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Recent Vault Activity Feed -->
+                <div class="mt-4 pt-3 border-top" style="border-color: var(--glass-border) !important;">
+                    <div class="kpi-label mb-2">Recent S3 Bucket Transfers</div>
+                    <div class="d-flex flex-column gap-2" id="vaultActivityList">
+                        <div class="vault-item d-flex align-items-center justify-content-between">
+                            <div class="text-truncate pe-2">
+                                <i class="bi bi-file-earmark-pdf text-danger me-2"></i>
+                                <span class="text-light">BOL_HLXU9876543.pdf</span>
+                            </div>
+                            <span class="badge bg-success bg-opacity-10 text-success">Synced</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal: Add New Container -->
+<div class="modal fade" id="addShipmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border-secondary border-opacity-25" style="background: #0d1424;">
+            <div class="modal-header border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title fw-bold text-white">Register Export Container</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addContainerForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Container Number (ISO 6346)</label>
+                        <input type="text" class="form-control search-input" id="newId" placeholder="e.g. MSKU9012345" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-secondary">Vessel Name</label>
+                        <input type="text" class="form-control search-input" id="newVessel" placeholder="e.g. Ever Ace" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small text-secondary">Port Corridor</label>
+                            <input type="text" class="form-control search-input" id="newRoute" placeholder="USHOU → NLRTM" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small text-secondary">Cut-Off Timestamp</label>
+                            <input type="text" class="form-control search-input" id="newCutoff" value="2026-10-19 17:00" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25">
+                    <button type="submit" class="btn btn-glow w-100">Add to Active Watchlist</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification for S3 Uploads -->
+<div class="toast-container position-fixed bottom-0 end-0 p-4">
+    <div id="s3Toast" class="toast align-items-center border-0" role="alert" style="background: #0f172a; border: 1px solid rgba(0,242,254,0.3) !important; border-radius: 12px;">
+        <div class="d-flex p-2">
+            <div class="toast-body d-flex align-items-center gap-2 text-white" id="s3ToastBody">
+                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                <span>File uploaded to Amazon S3!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 1. Live Cut-Off Countdown Calculator
+    function updateCountdowns() {
+        const now = new Date();
+        document.querySelectorAll('.countdown-timer').forEach(el => {
+            const rawDate = el.getAttribute('data-cutoff').replace(' ', 'T');
+            const target = new Date(rawDate);
+            const diffMs = target - now;
+            if (isNaN(target)) return;
+
+            if (diffMs <= 0) {
+                el.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-slash-circle me-1"></i>Gate Closed</span>';
+            } else {
+                const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+                el.innerHTML = `<i class="bi bi-stopwatch me-1 text-info"></i>${days}d ${hours}h remaining`;
+            }
+        });
+    }
+    updateCountdowns();
+
+    // 2. Interactive File Selection Label
+    const fileInput = document.getElementById('document');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            fileNameDisplay.innerHTML = `<span class="text-info"><i class="bi bi-file-earmark-check me-1"></i>${fileInput.files[0].name}</span>`;
+        }
+    });
+
+    // 3. Smooth AJAX S3 Upload with Toast Alert & Feed Update
+    const uploadForm = document.getElementById('s3UploadForm');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const toastEl = document.getElementById('s3Toast');
+    const toastBody = document.getElementById('s3ToastBody');
+    const bsToast = new bootstrap.Toast(toastEl);
+
+    uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(uploadForm);
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Encrypting to S3...';
+
+        try {
+            const response = await fetch('/upload', { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                toastBody.innerHTML = `<i class="bi bi-check-circle-fill text-success fs-5"></i><span>${result.message}</span>`;
+                bsToast.show();
+
+                // Add uploaded file directly to the Recent Vault Activity feed
+                const list = document.getElementById('vaultActivityList');
+                const item = document.createElement('div');
+                item.className = 'vault-item d-flex align-items-center justify-content-between';
+                item.innerHTML = `
+                    <div class="text-truncate pe-2">
+                        <i class="bi bi-file-earmark-lock2 text-info me-2"></i>
+                        <span class="text-light">${result.filename}</span>
+                    </div>
+                    <span class="badge bg-success bg-opacity-10 text-success">Synced</span>
+                `;
+                list.prepend(item);
+
+                // Increment Vault Counter
+                const vaultCount = document.getElementById('vaultCount');
+                vaultCount.textContent = parseInt(vaultCount.textContent) + 1;
+                uploadForm.reset();
+                fileNameDisplay.textContent = 'Drop shipping manifest or click to browse';
+            } else {
+                toastBody.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i><span>${result.message}</span>`;
+                bsToast.show();
+            }
+        } catch (err) {
+            toastBody.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i><span>Network or S3 connection error</span>`;
+            bsToast.show();
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Upload to S3 Cloud Vault';
+        }
+    });
+
+    // 4. Instant Search Filter
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        const filter = this.value.toLowerCase();
+        document.querySelectorAll('#shipmentTableBody tr').forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(filter) ? '' : 'none';
+        });
+    });
+
+    // 5. Add Container Modal Handler (Client-Side Preview until RDS is wired up)
+    document.getElementById('addContainerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const id = document.getElementById('newId').value.toUpperCase();
+        const vessel = document.getElementById('newVessel').value;
+        const route = document.getElementById('newRoute').value;
+        const cutoff = document.getElementById('newCutoff').value;
+
+        const tbody = document.getElementById('shipmentTableBody');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><span class="container-id">${id}</span></td>
+            <td>
+                <div class="fw-semibold text-white">${vessel}</div>
+                <div class="small" style="color: var(--text-secondary);"><i class="bi bi-geo-alt text-info me-1"></i>${route}</div>
+            </td>
+            <td>
+                <div class="fw-medium text-white">${cutoff}</div>
+                <div class="small countdown-timer" data-cutoff="${cutoff}" style="color: var(--text-secondary);">Calculating...</div>
+            </td>
+            <td><span class="badge-status status-pending"><i class="bi bi-clock-fill"></i> Pending</span></td>
+        `;
+        tbody.prepend(tr);
+        updateCountdowns();
+
+        const totalCount = document.getElementById('totalCount');
+        totalCount.textContent = parseInt(totalCount.textContent) + 1;
+
+        bootstrap.Modal.getInstance(document.getElementById('addShipmentModal')).hide();
+        this.reset();
+    });
+</script>
 
 </body>
 </html>
