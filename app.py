@@ -6,53 +6,15 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# Updated with authentic freight forwarding terminology
-mock_containers = [
-    {
-        "id": "MSKU1234567",
-        "booking": "BK-9928410",
-        "vessel": "Maersk Mc-Kinney Møller",
-        "pol": "USHOU",
-        "pod": "NLRTM",
-        "cutoff": "2026-10-18 14:00",
-        "status": "Pending Export Description",
-        "edos": "2026-10-20",
-        "loading_status": "Gate-In CY • En route to AEPJA"
-    },
-    {
-        "id": "HLXU9876543",
-        "booking": "BK-4410293",
-        "vessel": "Hapag-Lloyd Berlin Express",
-        "pol": "USSAV",
-        "pod": "DEHAM",
-        "cutoff": "2026-10-17 09:00",
-        "status": "Cleared to Load",
-        "edos": "2026-10-19",
-        "loading_status": "On Track • Ready for Vessel"
-    },
-    {
-        "id": "CMAU4582910",
-        "booking": "BK-7731904",
-        "vessel": "CMA CGM Jacques Saadé",
-        "pol": "USLAX",
-        "pod": "SGSIN",
-        "cutoff": "2026-10-15 16:00",
-        "status": "Vessel Arrival Delayed",
-        "edos": "2026-10-17",
-        "loading_status": "Berth Congestion • +12h"
-    },
-    {
-        "id": "OOLU8821044",
-        "booking": "BK-3029182",
-        "vessel": "OOCL Hong Kong",
-        "pol": "USNYC",
-        "pod": "CNSHA",
-        "cutoff": "2026-10-21 17:00",
-        "status": "Cleared to Load",
-        "edos": "2026-10-24",
-        "loading_status": "On Track • Yard Stacked"
-    }
-]
+# AWS RDS Connection Setup
+def get_db_connection():
+    return pymysql.connect(
+        host='oceantracker-db.cefhkqlkm5ww.us-east-1.rds.amazonaws.com',
+        user='admin',
+        password='OceanTracker2026!',
+        database='oceantracker',  # <--- Added this line
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
 uploaded_vault_files = [
     {"name": "MSKU1234567_Commercial_Invoice.pdf", "size": "248 KB", "time": "2h ago"},
@@ -61,26 +23,47 @@ uploaded_vault_files = [
 
 @app.route('/')
 def dashboard():
+    # Fetch live data from AWS RDS
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM containers ORDER BY cutoff ASC;")
+            live_containers = cursor.fetchall()
+    finally:
+        connection.close()
+
     return render_template(
         'dashboard.html',
-        containers=mock_containers,
+        containers=live_containers,
         vault_files=uploaded_vault_files
     )
 
 @app.route('/add_container', methods=['POST'])
 def add_container():
-    new_c = {
-        "id": request.form.get("id", "").upper(),
-        "booking": request.form.get("booking", "BK-8841200").upper(),
-        "vessel": request.form.get("vessel", "MSC Gülsün"),
-        "pol": request.form.get("pol", "USHOU"),
-        "pod": request.form.get("pod", "NLRTM"),
-        "cutoff": request.form.get("cutoff", "2026-10-19 12:00").replace("T", " "),
-        "status": request.form.get("status", "Pending Export Description"),
-        "edos": "TBD",
-        "loading_status": "Dispatched to Shipper"
-    }
-    mock_containers.insert(0, new_c)
+    # Capture form data
+    c_id = request.form.get("id", "").upper()
+    booking = request.form.get("booking", "BK-8841200").upper()
+    vessel = request.form.get("vessel", "MSC Gülsün")
+    pol = request.form.get("pol", "USHOU")
+    pod = request.form.get("pod", "NLRTM")
+    cutoff = request.form.get("cutoff", "2026-10-19 12:00").replace("T", " ")
+    status = request.form.get("status", "Pending Export Description")
+    edos = "TBD"
+    loading_status = "Dispatched to Shipper"
+
+    # Insert into AWS RDS
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO containers (id, booking, vessel, pol, pod, cutoff, status, edos, loading_status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(sql, (c_id, booking, vessel, pol, pod, cutoff, status, edos, loading_status))
+        connection.commit()
+    finally:
+        connection.close()
+
     return redirect(url_for('dashboard'))
 
 @app.route('/upload', methods=['POST'])
@@ -99,7 +82,7 @@ def upload_document():
     
     try:
         s3 = boto3.client('s3', region_name='us-east-1')
-        bucket_name = 'YOUR_BUCKET_NAME_HERE'  # Keep your S3 bucket name here
+        bucket_name = 'YOUR_BUCKET_NAME_HERE'  # <-- Keep your actual S3 bucket name here!
         
         s3.upload_file(filename, bucket_name, filename)
         os.remove(filename)
@@ -128,22 +111,19 @@ def generate_quote():
     pod = data.get('pod')
     eq_size = data.get('equipment', '40HC')
 
-    # Realistic base rates for ocean freight (USD)
     base_rates = {
-        "USHOU-NLRTM": 1450,  # Houston to Rotterdam
-        "USSAV-DEHAM": 1320,  # Savannah to Hamburg
-        "USLAX-SGSIN": 890,   # LA to Singapore
-        "USNYC-CNSHA": 1150   # NY to Shanghai
+        "USHOU-NLRTM": 1450,
+        "USSAV-DEHAM": 1320,
+        "USLAX-SGSIN": 890,
+        "USNYC-CNSHA": 1150
     }
 
     route_key = f"{pol}-{pod}"
-    base_cost = base_rates.get(route_key, 1250) # Fallback rate if route isn't in matrix
+    base_cost = base_rates.get(route_key, 1250)
 
-    # 40-foot High Cube is usually 25% more expensive than a standard 20-foot
     multiplier = 1.0 if eq_size == '20DC' else 1.25
     final_rate = int(base_cost * multiplier)
 
-    # Add realistic surcharges (BAF, THC)
     total_cost = final_rate + 350 + 150 
 
     return jsonify({
@@ -154,5 +134,6 @@ def generate_quote():
         "total": f"${total_cost:,}",
         "valid_until": "2026-10-31"
     })
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)

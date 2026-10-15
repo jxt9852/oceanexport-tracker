@@ -21,6 +21,7 @@
             --accent-blue: #4facfe;
             --text-main: #f8fafc;
             --text-secondary: #94a3b8;
+            --text-muted-custom: #64748b;
         }
 
         body {
@@ -186,6 +187,13 @@
             display: inline-block;
         }
 
+        .booking-sub {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         /* Status Badges */
         .badge-status {
             padding: 6px 13px;
@@ -272,6 +280,7 @@
             border-color: var(--accent-cyan);
             box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.15);
             color: #fff;
+            outline: none;
         }
 
         .vault-item {
@@ -281,6 +290,8 @@
             padding: 10px 12px;
             font-size: 0.82rem;
         }
+
+        /* Telemetry Animations */
         @keyframes pulse-red {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
             70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
@@ -303,14 +314,14 @@
             <span>OceanTracker <span style="font-weight:400; color: var(--accent-cyan);">OS</span></span>
         </a>
         <div class="d-flex align-items-center gap-3">
-            <div class="status-pill">
+            <div class="status-pill d-none d-md-inline-flex">
                 <span class="pulse-dot"></span>
                 AWS S3 Vault Connected
             </div>
             <button class="btn btn-sm btn-outline-light rounded-3 px-3 py-2" data-bs-toggle="modal" data-bs-target="#addShipmentModal">
                 <i class="bi bi-plus-lg me-1"></i> New Container
             </button>
-            <button class="btn-theme-toggle px-3 w-auto me-2" data-bs-toggle="modal" data-bs-target="#quoteModal" style="border-radius: 10px;">
+            <button class="btn btn-sm btn-outline-light rounded-3 px-3 py-2" data-bs-toggle="modal" data-bs-target="#quoteModal">
                 <i class="bi bi-calculator me-1"></i> Spot Quote
             </button>
         </div>
@@ -348,7 +359,7 @@
             <div class="glass-card kpi-card d-flex align-items-center justify-content-between">
                 <div>
                     <div class="kpi-label">S3 Vaulted Documents</div>
-                    <div class="kpi-value" id="vaultCount">14</div>
+                    <div class="kpi-value" id="vaultCount">{{ vault_files|length }}</div>
                     <div class="small mt-1" style="color: var(--text-secondary);"><i class="bi bi-shield-check text-info"></i> IAM Role Authenticated</div>
                 </div>
                 <div class="kpi-icon" style="background: rgba(0, 242, 254, 0.14); color: var(--accent-cyan);">
@@ -381,23 +392,21 @@
                                 <th>Gate Status</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Jinja2 loop from your Python backend -->
+                        <tbody id="shipmentTableBody">
                             {% for container in containers %}
                             <tr class="shipment-row" data-status="{{ container.status }}">
                                 <td>
-                                    <span class="container-id-pill">{{ container.id }}</span>
+                                    <span class="container-id">{{ container.id }}</span>
                                     <div class="booking-sub">{{ container.booking }}</div>
                                 </td>
                                 <td>
-                                    <div class="fw-semibold" style="color: var(--text-primary);">{{ container.vessel }}</div>
-                                    <div class="route-badge mt-1 mb-1">
+                                    <div class="fw-semibold text-white">{{ container.vessel }}</div>
+                                    <div class="mt-1 mb-1" style="font-size: 0.8rem; color: var(--text-secondary);">
                                         <span>{{ container.pol }}</span>
-                                        <i class="bi bi-arrow-right" style="color: var(--accent-primary);"></i>
+                                        <i class="bi bi-arrow-right mx-1" style="color: var(--accent-cyan);"></i>
                                         <span>{{ container.pod }}</span>
                                         <span class="ms-2 ps-2 border-start border-secondary" style="font-size: 0.7rem; font-family: monospace;">EDOS: {{ container.edos }}</span>
                                     </div>
-                                    <!-- Lively Telemetry Sub-row -->
                                     <div class="d-flex align-items-center gap-2 mt-1" style="font-size: 0.75rem; color: var(--text-muted-custom);">
                                         {% if 'On Track' in container.loading_status %}
                                             <span class="pulse-dot" style="width: 6px; height: 6px;"></span>
@@ -410,20 +419,20 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="fw-medium">{{ container.cutoff }}</div>
-                                    <span class="countdown-tag" data-cutoff="{{ container.cutoff }}">Calculating...</span>
+                                    <div class="fw-medium text-white">{{ container.cutoff }}</div>
+                                    <span class="small countdown-timer" data-cutoff="{{ container.cutoff }}" style="color: var(--text-secondary);">Calculating...</span>
                                 </td>
                                 <td>
                                     {% if container.status == 'Cleared to Load' %}
-                                        <span class="status-pill status-cleared">
+                                        <span class="badge-status status-cleared">
                                             <i class="bi bi-check-circle-fill"></i> Cleared to Load
                                         </span>
                                     {% elif 'Delayed' in container.status %}
-                                        <span class="status-pill status-risk">
+                                        <span class="badge-status status-urgent">
                                             <i class="bi bi-exclamation-triangle-fill"></i> {{ container.status }}
                                         </span>
                                     {% else %}
-                                        <span class="status-pill status-pending">
+                                        <span class="badge-status status-pending">
                                             <i class="bi bi-hourglass-split"></i> {{ container.status }}
                                         </span>
                                     {% endif %}
@@ -466,13 +475,15 @@
                 <div class="mt-4 pt-3 border-top" style="border-color: var(--glass-border) !important;">
                     <div class="kpi-label mb-2">Recent S3 Bucket Transfers</div>
                     <div class="d-flex flex-column gap-2" id="vaultActivityList">
+                        {% for file in vault_files %}
                         <div class="vault-item d-flex align-items-center justify-content-between">
                             <div class="text-truncate pe-2">
                                 <i class="bi bi-file-earmark-pdf text-danger me-2"></i>
-                                <span class="text-light">BOL_HLXU9876543.pdf</span>
+                                <span class="text-light">{{ file.name }}</span>
                             </div>
                             <span class="badge bg-success bg-opacity-10 text-success">Synced</span>
                         </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -488,24 +499,41 @@
                 <h5 class="modal-title fw-bold text-white">Register Export Container</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form id="addContainerForm">
+            <!-- FIXED FORM: Wraps the entire body and footer, points to /add_container via POST -->
+            <form action="/add_container" method="POST">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label small text-secondary">Container Number (ISO 6346)</label>
-                        <input type="text" class="form-control search-input" id="newId" placeholder="e.g. MSKU9012345" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small text-secondary">Vessel Name</label>
-                        <input type="text" class="form-control search-input" id="newVessel" placeholder="e.g. Ever Ace" required>
-                    </div>
-                    <div class="row g-2 mb-3">
+                    <div class="row g-3">
                         <div class="col-6">
-                            <label class="form-label small text-secondary">Port Corridor</label>
-                            <input type="text" class="form-control search-input" id="newRoute" placeholder="USHOU → NLRTM" required>
+                            <label class="small fw-semibold mb-1 text-secondary">Container Number</label>
+                            <input type="text" name="id" class="form-control search-input" placeholder="e.g. MAEU8492011" required>
                         </div>
                         <div class="col-6">
-                            <label class="form-label small text-secondary">Cut-Off Timestamp</label>
-                            <input type="text" class="form-control search-input" id="newCutoff" value="2026-10-19 17:00" required>
+                            <label class="small fw-semibold mb-1 text-secondary">Booking Ref</label>
+                            <input type="text" name="booking" class="form-control search-input" placeholder="e.g. BK-5519203" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-semibold mb-1 text-secondary">Mother Vessel Name</label>
+                            <input type="text" name="vessel" class="form-control search-input" placeholder="e.g. ONE Innovation" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-semibold mb-1 text-secondary">Port of Loading</label>
+                            <input type="text" name="pol" class="form-control search-input" value="USHOU" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-semibold mb-1 text-secondary">Port of Discharge</label>
+                            <input type="text" name="pod" class="form-control search-input" value="NLRTM" required>
+                        </div>
+                        <div class="col-7">
+                            <label class="small fw-semibold mb-1 text-secondary">CY Cut-Off Date & Time</label>
+                            <input type="datetime-local" name="cutoff" class="form-control search-input" value="2026-10-19T16:00" required>
+                        </div>
+                        <div class="col-5">
+                            <label class="small fw-semibold mb-1 text-secondary">Initial Status</label>
+                            <select name="status" class="form-control search-input">
+                                <option value="Pending Export Description">Pending Export Description</option>
+                                <option value="Cleared to Load">Cleared to Load</option>
+                                <option value="Vessel Arrival Delayed">Vessel Arrival Delayed</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -513,6 +541,69 @@
                     <button type="submit" class="btn btn-glow w-100">Add to Active Watchlist</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Spot Rate Estimator -->
+<div class="modal fade" id="quoteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card border-secondary border-opacity-25" style="background: #0d1424;">
+            <div class="modal-header border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title fw-bold text-white"><i class="bi bi-calculator me-2" style="color: var(--accent-cyan);"></i>Spot Rate Estimator</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quoteForm">
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <label class="small fw-semibold mb-1 text-secondary">Origin (POL)</label>
+                            <select id="quotePol" class="form-control search-input">
+                                <option value="USHOU">USHOU (Houston)</option>
+                                <option value="USSAV">USSAV (Savannah)</option>
+                                <option value="USLAX">USLAX (Los Angeles)</option>
+                                <option value="USNYC">USNYC (New York)</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="small fw-semibold mb-1 text-secondary">Destination (POD)</label>
+                            <select id="quotePod" class="form-control search-input">
+                                <option value="NLRTM">NLRTM (Rotterdam)</option>
+                                <option value="DEHAM">DEHAM (Hamburg)</option>
+                                <option value="SGSIN">SGSIN (Singapore)</option>
+                                <option value="CNSHA">CNSHA (Shanghai)</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-semibold mb-1 text-secondary">Equipment Size</label>
+                            <select id="quoteEq" class="form-control search-input">
+                                <option value="40HC">40' High Cube (Standard)</option>
+                                <option value="20DC">20' Dry Container</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-glow w-100 mb-3" id="calcBtn">Calculate Freight Cost</button>
+                </form>
+
+                <!-- Hidden Result Card -->
+                <div id="quoteResult" class="d-none p-3 rounded-3 border" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.3) !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-secondary text-uppercase fw-bold">Estimated Total</span>
+                        <span class="badge bg-success bg-opacity-25 text-success">Valid until Oct 31</span>
+                    </div>
+                    <div class="fs-1 fw-bold text-white mb-3" id="resTotal">--</div>
+                    
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Ocean Base Rate:</span> <span id="resBase" class="fw-semibold text-white">--</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-secondary mb-1">
+                        <span>Bunker Surcharge (BAF):</span> <span id="resBaf" class="fw-semibold text-white">--</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-secondary">
+                        <span>Terminal Handling (THC):</span> <span id="resThc" class="fw-semibold text-white">--</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -531,68 +622,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Spot Rate Estimator Modal -->
-<div class="modal fade" id="quoteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content p-2">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold"><i class="bi bi-calculator me-2" style="color: var(--accent-primary);"></i>Spot Rate Estimator</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="quoteForm">
-                    <div class="row g-3 mb-4">
-                        <div class="col-6">
-                            <label class="small fw-semibold mb-1">Origin (POL)</label>
-                            <select id="quotePol" class="search-input w-100 ps-3">
-                                <option value="USHOU">USHOU (Houston)</option>
-                                <option value="USSAV">USSAV (Savannah)</option>
-                                <option value="USLAX">USLAX (Los Angeles)</option>
-                                <option value="USNYC">USNYC (New York)</option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="small fw-semibold mb-1">Destination (POD)</label>
-                            <select id="quotePod" class="search-input w-100 ps-3">
-                                <option value="NLRTM">NLRTM (Rotterdam)</option>
-                                <option value="DEHAM">DEHAM (Hamburg)</option>
-                                <option value="SGSIN">SGSIN (Singapore)</option>
-                                <option value="CNSHA">CNSHA (Shanghai)</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-semibold mb-1">Equipment Size</label>
-                            <select id="quoteEq" class="search-input w-100 ps-3">
-                                <option value="40HC">40' High Cube (Standard)</option>
-                                <option value="20DC">20' Dry Container</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-glow w-100 mb-3" id="calcBtn">Calculate Freight Cost</button>
-                </form>
 
-                <!-- Hidden Result Card -->
-                <div id="quoteResult" class="d-none surface-card p-3 rounded-3 border border-success" style="background: rgba(16, 185, 129, 0.05);">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="small text-muted text-uppercase fw-bold">Estimated Total</span>
-                        <span class="badge bg-success bg-opacity-25 text-success">Valid until Oct 31</span>
-                    </div>
-                    <div class="fs-1 fw-bold text-white mb-3" id="resTotal">--</div>
-                    
-                    <div class="d-flex justify-content-between small text-muted mb-1">
-                        <span>Ocean Base Rate:</span> <span id="resBase" class="fw-semibold text-white">--</span>
-                    </div>
-                    <div class="d-flex justify-content-between small text-muted mb-1">
-                        <span>Bunker Surcharge (BAF):</span> <span id="resBaf" class="fw-semibold text-white">--</span>
-                    </div>
-                    <div class="d-flex justify-content-between small text-muted">
-                        <span>Terminal Handling (THC):</span> <span id="resThc" class="fw-semibold text-white">--</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <script>
     // 1. Live Cut-Off Countdown Calculator
     function updateCountdowns() {
@@ -601,6 +631,7 @@
             const rawDate = el.getAttribute('data-cutoff').replace(' ', 'T');
             const target = new Date(rawDate);
             const diffMs = target - now;
+            
             if (isNaN(target)) return;
 
             if (diffMs <= 0) {
@@ -617,171 +648,114 @@
     // 2. Interactive File Selection Label
     const fileInput = document.getElementById('document');
     const fileNameDisplay = document.getElementById('fileNameDisplay');
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-            fileNameDisplay.innerHTML = `<span class="text-info"><i class="bi bi-file-earmark-check me-1"></i>${fileInput.files[0].name}</span>`;
-        }
-    });
-
-    // 3. Smooth AJAX S3 Upload with Toast Alert & Feed Update
-    const uploadForm = document.getElementById('s3UploadForm');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const toastEl = document.getElementById('s3Toast');
-    const toastBody = document.getElementById('s3ToastBody');
-    const bsToast = new bootstrap.Toast(toastEl);
-
-    uploadForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(uploadForm);
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Encrypting to S3...';
-
-        try {
-            const response = await fetch('/upload', { method: 'POST', body: formData });
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                toastBody.innerHTML = `<i class="bi bi-check-circle-fill text-success fs-5"></i><span>${result.message}</span>`;
-                bsToast.show();
-
-                // Add uploaded file directly to the Recent Vault Activity feed
-                const list = document.getElementById('vaultActivityList');
-                const item = document.createElement('div');
-                item.className = 'vault-item d-flex align-items-center justify-content-between';
-                item.innerHTML = `
-                    <div class="text-truncate pe-2">
-                        <i class="bi bi-file-earmark-lock2 text-info me-2"></i>
-                        <span class="text-light">${result.filename}</span>
-                    </div>
-                    <span class="badge bg-success bg-opacity-10 text-success">Synced</span>
-                `;
-                list.prepend(item);
-
-                // Increment Vault Counter
-                const vaultCount = document.getElementById('vaultCount');
-                vaultCount.textContent = parseInt(vaultCount.textContent) + 1;
-                uploadForm.reset();
-                fileNameDisplay.textContent = 'Drop shipping manifest or click to browse';
-            } else {
-                toastBody.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i><span>${result.message}</span>`;
-                bsToast.show();
+    if (fileInput) {
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.innerHTML = `<span class="text-info"><i class="bi bi-file-earmark-check me-1"></i>${fileInput.files[0].name}</span>`;
             }
-        } catch (err) {
-            toastBody.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i><span>Network or S3 connection error</span>`;
-            bsToast.show();
-        } finally {
-            uploadBtn.disabled = false;
-            uploadBtn.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Upload to S3 Cloud Vault';
-        }
-    });
+        });
+    }
+
+    // 3. Smooth AJAX S3 Upload with Toast Alert
+    const uploadForm = document.getElementById('s3UploadForm');
+    if (uploadForm) {
+        const uploadBtn = document.getElementById('uploadBtn');
+        const toastEl = document.getElementById('s3Toast');
+        const toastBody = document.getElementById('s3ToastBody');
+        const bsToast = new bootstrap.Toast(toastEl);
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Encrypting to S3...';
+
+            try {
+                const response = await fetch('/upload', { method: 'POST', body: formData });
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    toastBody.innerHTML = `<i class="bi bi-check-circle-fill text-success fs-5"></i><span>${result.message}</span>`;
+                    bsToast.show();
+
+                    const list = document.getElementById('vaultActivityList');
+                    const item = document.createElement('div');
+                    item.className = 'vault-item d-flex align-items-center justify-content-between mt-2';
+                    item.innerHTML = `
+                        <div class="text-truncate pe-2">
+                            <i class="bi bi-file-earmark-lock2 text-info me-2"></i>
+                            <span class="text-light">${result.filename}</span>
+                        </div>
+                        <span class="badge bg-success bg-opacity-10 text-success">Synced</span>
+                    `;
+                    list.prepend(item);
+
+                    const vaultCount = document.getElementById('vaultCount');
+                    vaultCount.textContent = parseInt(vaultCount.textContent) + 1;
+                    uploadForm.reset();
+                    fileNameDisplay.textContent = 'Drop shipping manifest or click to browse';
+                } else {
+                    toastBody.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i><span>${result.message}</span>`;
+                    bsToast.show();
+                }
+            } catch (err) {
+                toastBody.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i><span>Network or S3 connection error</span>`;
+                bsToast.show();
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Upload to S3 Cloud Vault';
+            }
+        });
+    }
 
     // 4. Instant Search Filter
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        const filter = this.value.toLowerCase();
-        document.querySelectorAll('#shipmentTableBody tr').forEach(row => {
-            row.style.display = row.innerText.toLowerCase().includes(filter) ? '' : 'none';
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            document.querySelectorAll('.shipment-row').forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(filter) ? '' : 'none';
+            });
         });
-    });
+    }
 
-    // 5. Add Container Modal Handler (Client-Side Preview until RDS is wired up)
-    document.getElementById('addContainerForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const id = document.getElementById('newId').value.toUpperCase();
-        const vessel = document.getElementById('newVessel').value;
-        const route = document.getElementById('newRoute').value;
-        const cutoff = document.getElementById('newCutoff').value;
-
-        const tbody = document.getElementById('shipmentTableBody');
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><span class="container-id">${id}</span></td>
-            <td>
-                <div class="fw-semibold text-white">${vessel}</div>
-                <div class="small" style="color: var(--text-secondary);"><i class="bi bi-geo-alt text-info me-1"></i>${route}</div>
-            </td>
-            <td>
-                <div class="fw-medium text-white">${cutoff}</div>
-                <div class="small countdown-timer" data-cutoff="${cutoff}" style="color: var(--text-secondary);">Calculating...</div>
-            </td>
-            <td><span class="badge-status status-pending"><i class="bi bi-clock-fill"></i> Pending</span></td>
-        `;
-        tbody.prepend(tr);
-        updateCountdowns();
-
-        const totalCount = document.getElementById('totalCount');
-        totalCount.textContent = parseInt(totalCount.textContent) + 1;
-
-        bootstrap.Modal.getInstance(document.getElementById('addShipmentModal')).hide();
-        this.reset();
-    });
-    // Spot Rate Quote Generator
-    document.getElementById('quoteForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('calcBtn');
-        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Pinging Carriers...`;
-        
-        const payload = {
-            pol: document.getElementById('quotePol').value,
-            pod: document.getElementById('quotePod').value,
-            equipment: document.getElementById('quoteEq').value
-        };
-
-        try {
-            const response = await fetch('/api/quote', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
+    // 5. Spot Rate Quote Generator
+    const quoteForm = document.getElementById('quoteForm');
+    if (quoteForm) {
+        quoteForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('calcBtn');
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Pinging Carriers...`;
             
-            if(data.success) {
-                document.getElementById('resTotal').textContent = data.total;
-                document.getElementById('resBase').textContent = data.base_rate;
-                document.getElementById('resBaf').textContent = data.baf_surcharge;
-                document.getElementById('resThc').textContent = data.thc_surcharge;
-                
-                document.getElementById('quoteResult').classList.remove('d-none');
-            }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            btn.innerHTML = 'Calculate Freight Cost';
-        }
-    });// Spot Rate Quote Generator
-    document.getElementById('quoteForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('calcBtn');
-        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Pinging Carriers...`;
-        
-        const payload = {
-            pol: document.getElementById('quotePol').value,
-            pod: document.getElementById('quotePod').value,
-            equipment: document.getElementById('quoteEq').value
-        };
+            const payload = {
+                pol: document.getElementById('quotePol').value,
+                pod: document.getElementById('quotePod').value,
+                equipment: document.getElementById('quoteEq').value
+            };
 
-        try {
-            const response = await fetch('/api/quote', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
-            
-            if(data.success) {
-                document.getElementById('resTotal').textContent = data.total;
-                document.getElementById('resBase').textContent = data.base_rate;
-                document.getElementById('resBaf').textContent = data.baf_surcharge;
-                document.getElementById('resThc').textContent = data.thc_surcharge;
+            try {
+                const response = await fetch('/api/quote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
                 
-                document.getElementById('quoteResult').classList.remove('d-none');
+                if(data.success) {
+                    document.getElementById('resTotal').textContent = data.total;
+                    document.getElementById('resBase').textContent = data.base_rate;
+                    document.getElementById('resBaf').textContent = data.baf_surcharge;
+                    document.getElementById('resThc').textContent = data.thc_surcharge;
+                    
+                    document.getElementById('quoteResult').classList.remove('d-none');
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                btn.innerHTML = 'Calculate Freight Cost';
             }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            btn.innerHTML = 'Calculate Freight Cost';
-        }
-    });
-    
+        });
+    }
 </script>
 
 </body>
