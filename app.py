@@ -121,5 +121,38 @@ def upload_document():
             os.remove(filename)
         return jsonify({"success": False, "message": f"S3 Upload Failed: {str(e)}"}), 500
 
+@app.route('/api/quote', methods=['POST'])
+def generate_quote():
+    data = request.json
+    pol = data.get('pol')
+    pod = data.get('pod')
+    eq_size = data.get('equipment', '40HC')
+
+    # Realistic base rates for ocean freight (USD)
+    base_rates = {
+        "USHOU-NLRTM": 1450,  # Houston to Rotterdam
+        "USSAV-DEHAM": 1320,  # Savannah to Hamburg
+        "USLAX-SGSIN": 890,   # LA to Singapore
+        "USNYC-CNSHA": 1150   # NY to Shanghai
+    }
+
+    route_key = f"{pol}-{pod}"
+    base_cost = base_rates.get(route_key, 1250) # Fallback rate if route isn't in matrix
+
+    # 40-foot High Cube is usually 25% more expensive than a standard 20-foot
+    multiplier = 1.0 if eq_size == '20DC' else 1.25
+    final_rate = int(base_cost * multiplier)
+
+    # Add realistic surcharges (BAF, THC)
+    total_cost = final_rate + 350 + 150 
+
+    return jsonify({
+        "success": True,
+        "base_rate": f"${final_rate:,}",
+        "baf_surcharge": "$350",
+        "thc_surcharge": "$150",
+        "total": f"${total_cost:,}",
+        "valid_until": "2026-10-31"
+    })
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
