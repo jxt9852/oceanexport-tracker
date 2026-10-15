@@ -281,6 +281,16 @@
             padding: 10px 12px;
             font-size: 0.82rem;
         }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        @keyframes pulse-yellow {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
+            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
     </style>
 </head>
 <body>
@@ -368,36 +378,50 @@
                                 <th>Gate Status</th>
                             </tr>
                         </thead>
-                        <tbody id="shipmentTableBody">
+                        <tbody>
+                            <!-- Jinja2 loop from your Python backend -->
                             {% for container in containers %}
-                            <tr>
+                            <tr class="shipment-row" data-status="{{ container.status }}">
                                 <td>
-                                    <span class="container-id">{{ container.id }}</span>
+                                    <span class="container-id-pill">{{ container.id }}</span>
+                                    <div class="booking-sub">{{ container.booking }}</div>
                                 </td>
                                 <td>
-                                    <div class="fw-semibold text-white">{{ container.vessel | default('Maersk Eindhoven') }}</div>
-                                    <div class="small" style="color: var(--text-secondary);">
-                                        <i class="bi bi-geo-alt text-info me-1"></i>{{ container.route | default('USHOU → NLRTM') }}
+                                    <div class="fw-semibold" style="color: var(--text-primary);">{{ container.vessel }}</div>
+                                    <div class="route-badge mt-1 mb-1">
+                                        <span>{{ container.pol }}</span>
+                                        <i class="bi bi-arrow-right" style="color: var(--accent-primary);"></i>
+                                        <span>{{ container.pod }}</span>
+                                        <span class="ms-2 ps-2 border-start border-secondary" style="font-size: 0.7rem; font-family: monospace;">EDOS: {{ container.edos }}</span>
+                                    </div>
+                                    <!-- Lively Telemetry Sub-row -->
+                                    <div class="d-flex align-items-center gap-2 mt-1" style="font-size: 0.75rem; color: var(--text-muted-custom);">
+                                        {% if 'On Track' in container.loading_status %}
+                                            <span class="pulse-dot" style="width: 6px; height: 6px;"></span>
+                                        {% elif 'Congestion' in container.loading_status or 'Delayed' in container.loading_status %}
+                                            <span class="pulse-dot" style="width: 6px; height: 6px; background-color: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); animation: pulse-red 2s infinite;"></span>
+                                        {% else %}
+                                            <span class="pulse-dot" style="width: 6px; height: 6px; background-color: #f59e0b; box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); animation: pulse-yellow 2s infinite;"></span>
+                                        {% endif %}
+                                        <span>{{ container.loading_status }}</span>
                                     </div>
                                 </td>
                                 <td>
-                                    <div class="fw-medium text-white">{{ container.cutoff }}</div>
-                                    <div class="small countdown-timer" data-cutoff="{{ container.cutoff }}" style="color: var(--text-secondary);">
-                                        Calculating window...
-                                    </div>
+                                    <div class="fw-medium">{{ container.cutoff }}</div>
+                                    <span class="countdown-tag" data-cutoff="{{ container.cutoff }}">Calculating...</span>
                                 </td>
                                 <td>
-                                    {% if container.status == 'Cleared' %}
-                                        <span class="badge-status status-cleared">
-                                            <i class="bi bi-check-circle-fill"></i> Cleared
+                                    {% if container.status == 'Cleared to Load' %}
+                                        <span class="status-pill status-cleared">
+                                            <i class="bi bi-check-circle-fill"></i> Cleared to Load
                                         </span>
-                                    {% elif container.status == 'Urgent' %}
-                                        <span class="badge-status status-urgent">
-                                            <i class="bi bi-exclamation-triangle-fill"></i> Urgent
+                                    {% elif 'Delayed' in container.status %}
+                                        <span class="status-pill status-risk">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> {{ container.status }}
                                         </span>
                                     {% else %}
-                                        <span class="badge-status status-pending">
-                                            <i class="bi bi-clock-fill"></i> Pending
+                                        <span class="status-pill status-pending">
+                                            <i class="bi bi-hourglass-split"></i> {{ container.status }}
                                         </span>
                                     {% endif %}
                                 </td>
