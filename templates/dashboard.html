@@ -314,10 +314,17 @@
             <span>OceanTracker <span style="font-weight:400; color: var(--accent-cyan);">OS</span></span>
         </a>
         <div class="d-flex align-items-center gap-3">
+            {% if s3_configured %}
             <div class="status-pill d-none d-md-inline-flex">
                 <span class="pulse-dot"></span>
                 AWS S3 Vault Connected
             </div>
+            {% else %}
+            <div class="status-pill d-none d-md-inline-flex" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); color: #fbbf24;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Vault not configured
+            </div>
+            {% endif %}
             <button class="btn btn-sm btn-outline-light rounded-3 px-3 py-2" data-bs-toggle="modal" data-bs-target="#addShipmentModal">
                 <i class="bi bi-plus-lg me-1"></i> New Container
             </button>
@@ -329,6 +336,20 @@
 </nav>
 
 <div class="container">
+    {% if db_error %}
+    <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i> <span>{{ db_error }}</span>
+    </div>
+    {% endif %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    {% endwith %}
+
     <!-- Top Row: Executive KPI Metrics -->
     <div class="row g-3 mb-4">
         <div class="col-md-4">
@@ -347,7 +368,7 @@
             <div class="glass-card kpi-card d-flex align-items-center justify-content-between">
                 <div>
                     <div class="kpi-label">Pending Port Cut-Off</div>
-                    <div class="kpi-value">2</div>
+                    <div class="kpi-value" id="pendingCount">{{ pending_count }}</div>
                     <div class="small mt-1" style="color: #fbbf24;"><i class="bi bi-clock-history"></i> Requires VGM / Customs</div>
                 </div>
                 <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
@@ -359,8 +380,8 @@
             <div class="glass-card kpi-card d-flex align-items-center justify-content-between">
                 <div>
                     <div class="kpi-label">S3 Vaulted Documents</div>
-                    <div class="kpi-value" id="vaultCount">{{ vault_files|length }}</div>
-                    <div class="small mt-1" style="color: var(--text-secondary);"><i class="bi bi-shield-check text-info"></i> IAM Role Authenticated</div>
+                    <div class="kpi-value" id="vaultCount">{{ vault_total }}</div>
+                    <div class="small mt-1" style="color: var(--text-secondary);"><i class="bi bi-shield-check text-info"></i> Encrypted at rest (SSE-S3)</div>
                 </div>
                 <div class="kpi-icon" style="background: rgba(0, 242, 254, 0.14); color: var(--accent-cyan);">
                     <i class="bi bi-cloud-check"></i>
@@ -458,8 +479,9 @@
                     </p>
                     
                     <form id="s3UploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="upload-dropzone mb-3" id="dropzone">
-                            <input type="file" id="document" name="document" required>
+                            <input type="file" id="document" name="document" accept=".pdf,.png,.jpg,.jpeg,.xlsx" required>
                             <i class="bi bi-cloud-arrow-up fs-1" style="color: var(--accent-cyan);"></i>
                             <div class="fw-semibold text-white mt-2" id="fileNameDisplay">Drop shipping manifest or click to browse</div>
                             <div class="small mt-1" style="color: var(--text-secondary);">Supports PDF, PNG, JPG, XLSX (Max 25MB)</div>
@@ -499,13 +521,13 @@
                 <h5 class="modal-title fw-bold text-white">Register Export Container</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <!-- FIXED FORM: Wraps the entire body and footer, points to /add_container via POST -->
             <form action="/add_container" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-6">
                             <label class="small fw-semibold mb-1 text-secondary">Container Number</label>
-                            <input type="text" name="id" class="form-control search-input" placeholder="e.g. MAEU8492011" required>
+                            <input type="text" name="id" class="form-control search-input" placeholder="e.g. MAEU8492011" required maxlength="11" pattern="[A-Za-z]{4}[0-9]{7}" title="4 letters followed by 7 digits">
                         </div>
                         <div class="col-6">
                             <label class="small fw-semibold mb-1 text-secondary">Booking Ref</label>
@@ -517,15 +539,15 @@
                         </div>
                         <div class="col-6">
                             <label class="small fw-semibold mb-1 text-secondary">Port of Loading</label>
-                            <input type="text" name="pol" class="form-control search-input" value="USHOU" required>
+                            <input type="text" name="pol" class="form-control search-input" value="USHOU" required maxlength="5" pattern="[A-Za-z]{5}" title="5-letter UN/LOCODE">
                         </div>
                         <div class="col-6">
                             <label class="small fw-semibold mb-1 text-secondary">Port of Discharge</label>
-                            <input type="text" name="pod" class="form-control search-input" value="NLRTM" required>
+                            <input type="text" name="pod" class="form-control search-input" value="NLRTM" required maxlength="5" pattern="[A-Za-z]{5}" title="5-letter UN/LOCODE">
                         </div>
                         <div class="col-7">
                             <label class="small fw-semibold mb-1 text-secondary">CY Cut-Off Date & Time</label>
-                            <input type="datetime-local" name="cutoff" class="form-control search-input" value="2026-10-19T16:00" required>
+                            <input type="datetime-local" name="cutoff" class="form-control search-input" required>
                         </div>
                         <div class="col-5">
                             <label class="small fw-semibold mb-1 text-secondary">Initial Status</label>
@@ -585,11 +607,13 @@
                     <button type="submit" class="btn btn-glow w-100 mb-3" id="calcBtn">Calculate Freight Cost</button>
                 </form>
 
+                <div id="quoteError" class="alert alert-danger d-none py-2 small" role="alert"></div>
+
                 <!-- Hidden Result Card -->
                 <div id="quoteResult" class="d-none p-3 rounded-3 border" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.3) !important;">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="small text-secondary text-uppercase fw-bold">Estimated Total</span>
-                        <span class="badge bg-success bg-opacity-25 text-success">Valid until Oct 31</span>
+                        <span class="badge bg-success bg-opacity-25 text-success" id="resValid">Valid this month</span>
                     </div>
                     <div class="fs-1 fw-bold text-white mb-3" id="resTotal">--</div>
                     
@@ -624,109 +648,157 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // 1. Live Cut-Off Countdown Calculator
+    const CSRF_TOKEN = JSON.parse('{{ csrf_token()|tojson }}');
+
+    // 1. Live Cut-Off Countdown (refreshes every 30s)
     function updateCountdowns() {
         const now = new Date();
         document.querySelectorAll('.countdown-timer').forEach(el => {
-            const rawDate = el.getAttribute('data-cutoff').replace(' ', 'T');
-            const target = new Date(rawDate);
-            const diffMs = target - now;
-            
+            const target = new Date(el.dataset.cutoff.replace(' ', 'T'));
             if (isNaN(target)) return;
-
+            const diffMs = target - now;
+            el.replaceChildren();
+            const icon = document.createElement('i');
             if (diffMs <= 0) {
-                el.innerHTML = '<span class="text-danger fw-semibold"><i class="bi bi-slash-circle me-1"></i>Gate Closed</span>';
+                icon.className = 'bi bi-slash-circle me-1';
+                const label = document.createElement('span');
+                label.className = 'text-danger fw-semibold';
+                label.append(icon, 'Gate Closed');
+                el.append(label);
             } else {
-                const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
-                el.innerHTML = `<i class="bi bi-stopwatch me-1 text-info"></i>${days}d ${hours}h remaining`;
+                const days = Math.floor(diffMs / 86400000);
+                const hours = Math.floor((diffMs / 3600000) % 24);
+                icon.className = 'bi bi-stopwatch me-1 text-info';
+                el.append(icon, `${days}d ${hours}h remaining`);
             }
         });
     }
     updateCountdowns();
+    setInterval(updateCountdowns, 30000);
 
-    // 2. Interactive File Selection Label
+    // Toast helper (all text is inserted as text, never as HTML)
+    const toastEl = document.getElementById('s3Toast');
+    const toastBody = document.getElementById('s3ToastBody');
+    const bsToast = new bootstrap.Toast(toastEl);
+    function showToast(ok, message) {
+        const icon = document.createElement('i');
+        icon.className = ok ? 'bi bi-check-circle-fill text-success fs-5'
+                            : 'bi bi-exclamation-octagon-fill text-danger fs-5';
+        const text = document.createElement('span');
+        text.textContent = message;
+        toastBody.replaceChildren(icon, text);
+        bsToast.show();
+    }
+
+    // 2. File selection label + drag & drop styling
+    const DROP_LABEL = 'Drop shipping manifest or click to browse';
     const fileInput = document.getElementById('document');
     const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const dropzone = document.getElementById('dropzone');
     if (fileInput) {
         fileInput.addEventListener('change', () => {
             if (fileInput.files.length > 0) {
-                fileNameDisplay.innerHTML = `<span class="text-info"><i class="bi bi-file-earmark-check me-1"></i>${fileInput.files[0].name}</span>`;
+                const icon = document.createElement('i');
+                icon.className = 'bi bi-file-earmark-check me-1';
+                const label = document.createElement('span');
+                label.className = 'text-info';
+                label.append(icon, fileInput.files[0].name);
+                fileNameDisplay.replaceChildren(label);
             }
         });
+        ['dragenter', 'dragover'].forEach(evt =>
+            dropzone.addEventListener(evt, () => dropzone.classList.add('dragover')));
+        ['dragleave', 'drop'].forEach(evt =>
+            dropzone.addEventListener(evt, () => dropzone.classList.remove('dragover')));
     }
 
-    // 3. Smooth AJAX S3 Upload with Toast Alert
+    // 3. AJAX S3 upload
     const uploadForm = document.getElementById('s3UploadForm');
     if (uploadForm) {
         const uploadBtn = document.getElementById('uploadBtn');
-        const toastEl = document.getElementById('s3Toast');
-        const toastBody = document.getElementById('s3ToastBody');
-        const bsToast = new bootstrap.Toast(toastEl);
+        const MAX_BYTES = 25 * 1024 * 1024;
+        const BTN_HTML = '<i class="bi bi-lock-fill me-1"></i> Upload to S3 Cloud Vault';
 
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData(uploadForm);
+            const file = fileInput.files[0];
+            if (file && file.size > MAX_BYTES) {
+                showToast(false, 'File too large (max 25 MB)');
+                return;
+            }
             uploadBtn.disabled = true;
             uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Encrypting to S3...';
 
             try {
-                const response = await fetch('/upload', { method: 'POST', body: formData });
-                const result = await response.json();
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': CSRF_TOKEN },
+                    body: new FormData(uploadForm)
+                });
+                let result;
+                try { result = await response.json(); }
+                catch { result = { success: false, message: `Upload failed (HTTP ${response.status})` }; }
 
                 if (response.ok && result.success) {
-                    toastBody.innerHTML = `<i class="bi bi-check-circle-fill text-success fs-5"></i><span>${result.message}</span>`;
-                    bsToast.show();
+                    showToast(true, result.message);
 
                     const list = document.getElementById('vaultActivityList');
                     const item = document.createElement('div');
-                    item.className = 'vault-item d-flex align-items-center justify-content-between mt-2';
-                    item.innerHTML = `
-                        <div class="text-truncate pe-2">
-                            <i class="bi bi-file-earmark-lock2 text-info me-2"></i>
-                            <span class="text-light">${result.filename}</span>
-                        </div>
-                        <span class="badge bg-success bg-opacity-10 text-success">Synced</span>
-                    `;
+                    item.className = 'vault-item d-flex align-items-center justify-content-between';
+                    const left = document.createElement('div');
+                    left.className = 'text-truncate pe-2';
+                    const icon = document.createElement('i');
+                    icon.className = 'bi bi-file-earmark-lock2 text-info me-2';
+                    const name = document.createElement('span');
+                    name.className = 'text-light';
+                    name.textContent = result.filename;
+                    left.append(icon, name);
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-success bg-opacity-10 text-success';
+                    badge.textContent = 'Synced';
+                    item.append(left, badge);
                     list.prepend(item);
 
                     const vaultCount = document.getElementById('vaultCount');
-                    vaultCount.textContent = parseInt(vaultCount.textContent) + 1;
+                    vaultCount.textContent = parseInt(vaultCount.textContent, 10) + 1;
                     uploadForm.reset();
-                    fileNameDisplay.textContent = 'Drop shipping manifest or click to browse';
+                    fileNameDisplay.textContent = DROP_LABEL;
                 } else {
-                    toastBody.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i><span>${result.message}</span>`;
-                    bsToast.show();
+                    showToast(false, result.message || 'Upload failed');
                 }
             } catch (err) {
-                toastBody.innerHTML = `<i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i><span>Network or S3 connection error</span>`;
-                bsToast.show();
+                showToast(false, 'Network error. Please try again.');
             } finally {
                 uploadBtn.disabled = false;
-                uploadBtn.innerHTML = '<i class="bi bi-lock-fill me-1"></i> Upload to S3 Cloud Vault';
+                uploadBtn.innerHTML = BTN_HTML;
             }
         });
     }
 
-    // 4. Instant Search Filter
+    // 4. Instant search filter
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
-        searchInput.addEventListener('keyup', function() {
+        searchInput.addEventListener('input', function () {
             const filter = this.value.toLowerCase();
             document.querySelectorAll('.shipment-row').forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(filter) ? '' : 'none';
+                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
             });
         });
     }
 
-    // 5. Spot Rate Quote Generator
+    // 5. Spot rate quote
     const quoteForm = document.getElementById('quoteForm');
     if (quoteForm) {
-        quoteForm.addEventListener('submit', async function(e) {
+        const quoteError = document.getElementById('quoteError');
+        const quoteResult = document.getElementById('quoteResult');
+
+        quoteForm.addEventListener('submit', async function (e) {
             e.preventDefault();
             const btn = document.getElementById('calcBtn');
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Pinging Carriers...`;
-            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Pinging Carriers...';
+            quoteError.classList.add('d-none');
+
             const payload = {
                 pol: document.getElementById('quotePol').value,
                 pod: document.getElementById('quotePod').value,
@@ -736,22 +808,31 @@
             try {
                 const response = await fetch('/api/quote', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
                     body: JSON.stringify(payload)
                 });
-                const data = await response.json();
-                
-                if(data.success) {
+                let data;
+                try { data = await response.json(); }
+                catch { data = { success: false, message: `Quote failed (HTTP ${response.status})` }; }
+
+                if (response.ok && data.success) {
                     document.getElementById('resTotal').textContent = data.total;
                     document.getElementById('resBase').textContent = data.base_rate;
                     document.getElementById('resBaf').textContent = data.baf_surcharge;
                     document.getElementById('resThc').textContent = data.thc_surcharge;
-                    
-                    document.getElementById('quoteResult').classList.remove('d-none');
+                    document.getElementById('resValid').textContent = 'Valid until ' + data.valid_until_label;
+                    quoteResult.classList.remove('d-none');
+                } else {
+                    quoteResult.classList.add('d-none');
+                    quoteError.textContent = data.message || 'Could not calculate a quote.';
+                    quoteError.classList.remove('d-none');
                 }
             } catch (err) {
-                console.error(err);
+                quoteResult.classList.add('d-none');
+                quoteError.textContent = 'Network error. Please try again.';
+                quoteError.classList.remove('d-none');
             } finally {
+                btn.disabled = false;
                 btn.innerHTML = 'Calculate Freight Cost';
             }
         });
