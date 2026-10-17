@@ -314,17 +314,6 @@
             <span>OceanTracker <span style="font-weight:400; color: var(--accent-cyan);">OS</span></span>
         </a>
         <div class="d-flex align-items-center gap-3">
-            {% if s3_configured %}
-            <div class="status-pill d-none d-md-inline-flex">
-                <span class="pulse-dot"></span>
-                AWS S3 Vault Connected
-            </div>
-            {% else %}
-            <div class="status-pill d-none d-md-inline-flex" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); color: #fbbf24;">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                Vault not configured
-            </div>
-            {% endif %}
             <button class="btn btn-sm btn-outline-light rounded-3 px-3 py-2" data-bs-toggle="modal" data-bs-target="#addShipmentModal">
                 <i class="bi bi-plus-lg me-1"></i> New Container
             </button>
