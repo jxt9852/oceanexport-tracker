@@ -464,7 +464,7 @@
                         <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">us-east-1</span>
                     </div>
                     <p class="small mb-4" style="color: var(--text-secondary);">
-                        Securely stream Commercial Invoices, Packing Lists, and Bills of Lading directly to Amazon S3.
+                        Securely stream Commercial Invoices, Packing Lists, and Bills of Lading directly to the Secure Cloud Vault.
                     </p>
                     
                     <form id="s3UploadForm" action="/upload" method="POST" enctype="multipart/form-data">
@@ -484,7 +484,7 @@
 
                 <!-- Recent Vault Activity Feed -->
                 <div class="mt-4 pt-3 border-top" style="border-color: var(--glass-border) !important;">
-                    <div class="kpi-label mb-2">Recent S3 Bucket Transfers</div>
+                    <div class="kpi-label mb-2">Recent Secure Cloud Vault Transfers</div>
                     <div class="d-flex flex-column gap-2" id="vaultActivityList">
                         {% for file in vault_files %}
                         <div class="vault-item d-flex align-items-center justify-content-between">
@@ -627,7 +627,7 @@
         <div class="d-flex p-2">
             <div class="toast-body d-flex align-items-center gap-2 text-white" id="s3ToastBody">
                 <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                <span>File uploaded to Amazon S3!</span>
+                <span>File uploaded to Secure Cloud Vault!</span>
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
@@ -706,7 +706,7 @@
     if (uploadForm) {
         const uploadBtn = document.getElementById('uploadBtn');
         const MAX_BYTES = 25 * 1024 * 1024;
-        const BTN_HTML = '<i class="bi bi-lock-fill me-1"></i> Upload to S3 Cloud Vault';
+        const BTN_HTML = '<i class="bi bi-lock-fill me-1"></i> Upload to Secure Cloud Vault';
 
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -716,7 +716,7 @@
                 return;
             }
             uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Encrypting to S3...';
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Encrypting to Secure Cloud Vault...';
 
             try {
                 const response = await fetch('/upload', {
