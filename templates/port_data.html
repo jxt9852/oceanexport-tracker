@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Port Telemetry | Ocean Tracker OS</title>
+    <!-- Tailwind CSS for modern enterprise styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+    
+    <!-- Top Navigation Bar -->
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="h-3 w-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span class="font-bold text-lg tracking-wider text-white">OCEAN TRACKER OS</span>
+            </div>
+            <div class="flex space-x-6 text-sm">
+                <a href="{{ url_for('dashboard') }}" class="text-slate-400 hover:text-white transition">Dashboard</a>
+                <a href="{{ url_for('port_data_feed') }}" class="text-emerald-400 font-medium">Live Port Telemetry</a>
+                <a href="{{ url_for('dashboard') }}#quote" class="text-slate-400 hover:text-white transition">Spot Quote Calculator</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        <div class="mb-8 flex justify-between items-end">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">Live Daily Vessel & Terminal Telemetry</h1>
+                <p class="text-sm text-slate-400 mt-1">Real-time container terminal arrivals, rolling gate cut-offs, and berth statuses.</p>
+            </div>
+            <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1.5 rounded border border-slate-700">
+                Source: Automated Port Extraction Pipeline
+            </span>
+        </div>
+
+        {% if db_error %}
+        <div class="bg-red-950/50 border border-red-800 text-red-200 px-4 py-3 rounded-lg mb-6 text-sm">
+            {{ db_error }}
+        </div>
+        {% endif %}
+
+        <!-- Telemetry Table Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-800/50 text-slate-400 border-b border-slate-800 text-xs uppercase tracking-wider">
+                            <th class="py-4 px-6 font-semibold">Vessel Name</th>
+                            <th class="py-4 px-6 font-semibold">Terminal Location</th>
+                            <th class="py-4 px-6 font-semibold">Estimated Arrival (ETA)</th>
+                            <th class="py-4 px-6 font-semibold">Gate Cut-Off</th>
+                            <th class="py-4 px-6 font-semibold">Operational Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800/60">
+                        {% if vessels %}
+                            {% for v in vessels %}
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="py-4 px-6 font-medium text-white">{{ v.vessel_name }}</td>
+                                <td class="py-4 px-6 text-slate-300">{{ v.terminal }}</td>
+                                <td class="py-4 px-6 text-slate-300">{{ v.eta }}</td>
+                                <td class="py-4 px-6 text-amber-400 font-mono">{{ v.cutoff }}</td>
+                                <td class="py-4 px-6">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                        {% if 'On Schedule' in v.status or 'Cleared' in v.status %} bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                                        {% elif 'Ready' in v.status %} bg-blue-500/10 text-blue-400 border border-blue-500/20
+                                        {% else %} bg-amber-500/10 text-amber-400 border border-amber-500/20 {% endif %}">
+                                        {{ v.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="py-12 text-center text-slate-500">
+                                    No live vessel telemetry currently indexed. Run <code class="text-slate-400">python extract_port_data.py</code> to sync records.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

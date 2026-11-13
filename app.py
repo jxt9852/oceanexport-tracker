@@ -11,6 +11,8 @@ from uuid import uuid4
 import boto3
 import pymysql
 from botocore.exceptions import BotoCoreError, ClientError
+from bs4 import BeautifulSoup
+import requests
 from flask import (Flask, Response, abort, flash, jsonify, redirect,
                    render_template, request, session, url_for)
 from werkzeug.utils import secure_filename
@@ -51,6 +53,10 @@ BASE_RATES = {
     "USSAV-DEHAM": 1320,
     "USLAX-SGSIN": 890,
     "USNYC-CNSHA": 1150,
+    "USMIA-AEJEA": 1650,   # Miami to Jebel Ali
+    "USMIA-INBOM": 1850,   # Miami to Mumbai
+    "USHOU-AEJEA": 1550,   # Houston to Jebel Ali
+    "USNYC-INBOM": 1750,   # New York to Mumbai
 }
 EQUIPMENT_MULTIPLIER = {"20DC": 1.0, "40HC": 1.25}
 BAF_SURCHARGE = 350
@@ -220,13 +226,39 @@ def dashboard():
     ), (503 if db_error else 200)
 
 
-def _parse_cutoff(raw: str):
-    for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M"):
+@app.route("/port-data")
+def port_data_feed():
+    """Live daily terminal vessel schedules and telemetry feed."""
+    vessels, db_error = [], None
+    try:
+        connection = get_db_connection()
         try:
-            return datetime.strptime(raw.strip(), fmt)
-        except ValueError:
-            continue
-    return None
+            with connection.cursor() as cursor:
+                # Ensures table exists seamlessly on the fly if needed
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS port_vessels (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        vessel_name VARCHAR(255) NOT NULL,
+                        terminal VARCHAR(100) NOT NULL,
+                        eta DATETIME NOT NULL,
+                        cutoff DATETIME NOT NULL,
+                        status VARCHAR(100) NOT NULL,
+                        UNIQUE KEY unique_vessel (vessel_name, terminal)
+                    )
+                """)
+                cursor.execute("SELECT * FROM port_vessels ORDER BY eta ASC;")
+                vessels = cursor.fetchall()
+        finally:
+            connection.close()
+    except pymysql.MySQLError:
+        app.logger.exception("Port data query failed")
+        db_error = "Live port telemetry data is temporarily unavailable."
+
+    return render_template(
+        "port_data.html",
+        vessels=vessels,
+        db_error=db_error
+    ), (503 if db_error else 200)
 
 
 @app.route("/add_container", methods=["POST"])
@@ -350,6 +382,8 @@ def generate_quote():
     pol = str(data.get("pol", "")).upper()
     pod = str(data.get("pod", "")).upper()
     eq_size = str(data.get("equipment", "40HC")).upper()
+    weight = float(data.get("weight", 20000))
+    hazmat = bool(data.get("hazmat", False))
 
     if eq_size not in EQUIPMENT_MULTIPLIER:
         return jsonify({"success": False, "message": "Unsupported equipment size"}), 400
@@ -359,7 +393,9 @@ def generate_quote():
         return jsonify({"success": False, "message": f"No rate on file for {pol} → {pod}"}), 400
 
     final_rate = int(base_cost * EQUIPMENT_MULTIPLIER[eq_size])
-    total_cost = final_rate + BAF_SURCHARGE + THC_SURCHARGE
+    weight_surcharge = 175 if weight > 35000 else 0
+    hazmat_fee = 450 if hazmat else 0
+    total_cost = final_rate + BAF_SURCHARGE + THC_SURCHARGE + weight_surcharge + hazmat_fee
 
     today = date.today()
     valid_until = date(today.year, today.month, calendar.monthrange(today.year, today.month)[1])
@@ -367,7 +403,9 @@ def generate_quote():
     return jsonify({
         "success": True,
         "base_rate": f"${final_rate:,}",
-        "baf_surcharge": f"${BAF_SURCHARGE:,}",
+        "weight_surcharge": f"${weight_surcharge:,}",
+        "hazmat_fee": f"${hazmat_fee:,}",
+        "bunker_surcharge": f"${BAF_SURCHARGE:,}",
         "thc_surcharge": f"${THC_SURCHARGE:,}",
         "total": f"${total_cost:,}",
         "valid_until": valid_until.isoformat(),
