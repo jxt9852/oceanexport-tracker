@@ -1,430 +1,119 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OceanTracker OS | Maritime Cut-Off Command</title>
-    <!-- Bootstrap 5.3 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --bg-deep: #060911;
-            --glass-surface: rgba(15, 23, 42, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.14);
-            --accent-cyan: #00f2fe;
-            --accent-blue: #4facfe;
-            --text-main: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted-custom: #64748b;
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-deep);
-            background-image: 
-                radial-gradient(circle at 12% 18%, rgba(79, 172, 254, 0.14) 0%, transparent 42%),
-                radial-gradient(circle at 88% 82%, rgba(0, 242, 254, 0.10) 0%, transparent 45%),
-                linear-gradient(180deg, #060911 0%, #0b1120 100%);
-            background-attachment: fixed;
-            color: var(--text-main);
-            min-height: 100vh;
-            padding-bottom: 4rem;
-        }
-
-        /* Top Command Bar */
-        .navbar-glass {
-            background: rgba(6, 9, 17, 0.8);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .brand-logo {
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            font-size: 1.35rem;
-            color: #fff;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .brand-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 9px;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: #060911;
-            font-size: 1.1rem;
-            box-shadow: 0 0 20px rgba(0, 242, 254, 0.35);
-        }
-
-        /* Glass Cards */
-        .glass-card {
-            background: var(--glass-surface);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 18px;
-            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
-            transition: border-color 0.25s ease, transform 0.25s ease;
-        }
-
-        .glass-card:hover {
-            border-color: var(--glass-highlight);
-        }
-
-        /* KPI Summary Cards */
-        .kpi-card {
-            padding: 1.35rem 1.5rem;
-        }
-
-        .kpi-label {
-            color: var(--text-secondary);
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            font-weight: 600;
-        }
-
-        .kpi-value {
-            font-size: 1.85rem;
-            font-weight: 700;
-            color: #fff;
-            margin-top: 4px;
-            line-height: 1.1;
-        }
-
-        .kpi-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-        }
-
-        /* Fix Bootstrap 5.3 White Table Override */
-        .table-ocean {
-            --bs-table-bg: transparent !important;
-            --bs-table-striped-bg: transparent !important;
-            --bs-table-hover-bg: rgba(255, 255, 255, 0.04) !important;
-            --bs-table-color: var(--text-main) !important;
-            border-color: var(--glass-border) !important;
-            margin-bottom: 0;
-        }
-
-        .table-ocean thead th {
-            background: rgba(255, 255, 255, 0.02) !important;
-            color: var(--text-secondary) !important;
-            font-size: 0.74rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--glass-border) !important;
-        }
-
-        .table-ocean tbody td {
-            background: transparent !important;
-            color: var(--text-main) !important;
-            padding: 18px 16px;
-            vertical-align: middle;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-        }
-
-        .table-ocean tbody tr:last-child td {
-            border-bottom: none !important;
-        }
-
-        .container-id {
-            font-family: 'JetBrains Mono', monospace;
-            font-weight: 600;
-            font-size: 0.96rem;
-            color: var(--accent-cyan);
-            background: rgba(0, 242, 254, 0.08);
-            border: 1px solid rgba(0, 242, 254, 0.2);
-            padding: 5px 10px;
-            border-radius: 8px;
-            display: inline-block;
-        }
-
-        .booking-sub {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-top: 4px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        /* Status Badges */
-        .badge-status {
-            padding: 6px 13px;
-            border-radius: 999px;
-            font-size: 0.76rem;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .status-cleared {
-            background: rgba(16, 185, 129, 0.14);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.35);
-        }
-
-        .status-pending {
-            background: rgba(245, 158, 11, 0.14);
-            color: #fbbf24;
-            border: 1px solid rgba(245, 158, 11, 0.35);
-        }
-
-        .status-urgent {
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.4);
-        }
-
-        /* Custom Drag & Drop Zone */
-        .upload-dropzone {
-            border: 1.5px dashed rgba(79, 172, 254, 0.35);
-            background: rgba(15, 23, 42, 0.45);
-            border-radius: 14px;
-            padding: 2rem 1.25rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            position: relative;
-        }
-
-        .upload-dropzone:hover, .upload-dropzone.dragover {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 242, 254, 0.06);
-            box-shadow: 0 0 25px rgba(0, 242, 254, 0.1);
-        }
-
-        .upload-dropzone input[type="file"] {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        /* Buttons & Inputs */
-        .btn-glow {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-            border: none;
-            color: #060911;
-            font-weight: 700;
-            border-radius: 11px;
-            padding: 12px 18px;
-            transition: all 0.25s ease;
-        }
-
-        .btn-glow:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 24px rgba(0, 242, 254, 0.35);
-            color: #060911;
-        }
-
-        .search-input {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--glass-border);
-            color: #fff;
-            border-radius: 10px;
-            font-size: 0.86rem;
-            padding: 8px 14px;
-        }
-
-        .search-input:focus {
-            background: rgba(255, 255, 255, 0.07);
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.15);
-            color: #fff;
-            outline: none;
-        }
-
-        .vault-item {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--glass-border);
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 0.82rem;
-        }
-
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
-            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-        @keyframes pulse-yellow {
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
-            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-        }
-    </style>
+    <title>Dashboard | Ocean Tracker OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-
-<!-- Top Navigation with Navigation Panes -->
-<nav class="navbar navbar-glass py-3 mb-4 sticky-top">
-    <div class="container">
-        <a class="brand-logo" href="{{ url_for('dashboard') }}">
-            <span class="brand-icon"><i class="bi bi-tsunami"></i></span>
-            <span>OceanTracker <span style="font-weight:400; color: var(--accent-cyan);">OS</span></span>
-        </a>
-        <div class="d-flex align-items-center gap-3">
-            <!-- Navigation Pane Link to Live Port Telemetry -->
-            <a href="{{ url_for('port_data_feed') }}" class="btn btn-sm btn-outline-info rounded-3 px-3 py-2 text-decoration-none">
-                <i class="bi bi-water me-1"></i> Live Port Telemetry
-            </a>
-            <button class="btn btn-sm btn-outline-light rounded-3 px-3 py-2" data-bs-toggle="modal" data-bs-target="#addShipmentModal">
-                <i class="bi bi-plus-lg me-1"></i> New Container
-            </button>
-            <button class="btn btn-sm btn-outline-light rounded-3 px-3 py-2" data-bs-toggle="modal" data-bs-target="#quoteModal">
-                <i class="bi bi-calculator me-1"></i> Spot Quote
-            </button>
-        </div>
-    </div>
-</nav>
-
-<div class="container">
-    {% if db_error %}
-    <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
-        <i class="bi bi-exclamation-triangle-fill"></i> <span>{{ db_error }}</span>
-    </div>
-    {% endif %}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-    {% endwith %}
-
-    <!-- Top Row: Executive KPI Metrics with Interactive Navigation Pane -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <!-- Clickable KPI Card acting as a Navigation Pane to Live Port Telemetry -->
-            <a href="{{ url_for('port_data_feed') }}" class="text-decoration-none">
-                <div class="glass-card kpi-card d-flex align-items-center justify-content-between h-100" style="cursor: pointer;">
-                    <div>
-                        <div class="kpi-label">Active Export Units</div>
-                        <div class="kpi-value" id="totalCount">{{ containers|length }}</div>
-                        <div class="small mt-1 text-info fw-semibold"><i class="bi bi-arrow-up-right me-1"></i> Open Live Port Telemetry Feed &rarr;</div>
-                    </div>
-                    <div class="kpi-icon" style="background: rgba(79, 172, 254, 0.15); color: var(--accent-blue);">
-                        <i class="bi bi-box-seam"></i>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-md-4">
-            <div class="glass-card kpi-card d-flex align-items-center justify-content-between h-100">
-                <div>
-                    <div class="kpi-label">Pending Port Cut-Off</div>
-                    <div class="kpi-value" id="pendingCount">{{ pending_count }}</div>
-                    <div class="small mt-1" style="color: #fbbf24;"><i class="bi bi-clock-history"></i> Requires VGM / Customs</div>
-                </div>
-                <div class="kpi-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
-                    <i class="bi bi-hourglass-split"></i>
-                </div>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+    
+    <!-- Top Navigation Bar -->
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="h-3 w-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span class="font-bold text-lg tracking-wider text-white">OCEAN TRACKER OS</span>
+            </div>
+            <div class="flex space-x-6 text-sm items-center">
+                <a href="{{ url_for('dashboard') }}" class="text-emerald-400 font-medium">Dashboard</a>
+                <a href="{{ url_for('port_data_feed') }}" class="text-slate-400 hover:text-white transition">Live Port Telemetry</a>
+                <a href="{{ url_for('new_container') }}" class="text-slate-400 hover:text-white transition">New Container</a>
+                <a href="{{ url_for('spot_quote_page') }}" class="text-slate-400 hover:text-white transition">Spot Quote Calculator</a>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="glass-card kpi-card d-flex align-items-center justify-content-between h-100">
-                <div>
-                    <div class="kpi-label">Secure Cloud Vaulted Documents</div>
-                    <div class="kpi-value" id="vaultCount">{{ vault_total }}</div>
-                    <div class="small mt-1" style="color: var(--text-secondary);"><i class="bi bi-shield-check text-info"></i> Encrypted at rest (SSE-S3)</div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mb-6 space-y-2">
+              {% for category, message in messages %}
+                <div class="p-4 rounded-lg text-sm border {% if category == 'error' %}bg-red-950/50 border-red-800 text-red-200{% else %}bg-emerald-950/50 border-emerald-800 text-emerald-200{% endif %}">
+                  {{ message }}
                 </div>
-                <div class="kpi-icon" style="background: rgba(0, 242, 254, 0.14); color: var(--accent-cyan);">
-                    <i class="bi bi-cloud-check"></i>
-                </div>
+              {% endfor %}
             </div>
-        </div>
-    </div>
+          {% endif %}
+        {% endwith %}
 
-    <!-- Main Content Grid -->
-    <div class="row g-4">
-        <!-- Left Column: Active Shipments Table -->
-        <div class="col-lg-8">
-            <div class="glass-card p-4 h-100">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-                    <div>
-                        <h5 class="fw-bold mb-1 text-white">Active Container Cut-Offs</h5>
-                        <p class="small mb-0" style="color: var(--text-secondary);">Real-time CY & documentation deadlines across global terminals</p>
-                    </div>
-                    <input type="text" id="searchInput" class="search-input" placeholder="Search container, vessel, port...">
+        <!-- Navigation Panes & KPI Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <!-- Navigation Pane 1: Port Telemetry -->
+            <a href="{{ url_for('port_data_feed') }}" class="bg-slate-900 border border-slate-800 hover:border-emerald-500/50 rounded-xl p-6 shadow-lg transition block group">
+                <div class="text-xs uppercase font-semibold text-slate-400 tracking-wider flex justify-between items-center">
+                    Active Export Units
+                    <span class="text-emerald-400 group-hover:translate-x-1 transition">↗</span>
                 </div>
+                <div class="text-3xl font-bold mt-2 text-white">{{ containers | length }}</div>
+                <div class="text-xs text-emerald-400 mt-3 font-medium">View Live Port Telemetry Feed →</div>
+            </a>
 
-                <div class="table-responsive">
-                    <table class="table table-ocean table-hover align-middle" id="shipmentTable">
+            <!-- Navigation Pane 2: New Container Page -->
+            <a href="{{ url_for('new_container') }}" class="bg-slate-900 border border-slate-800 hover:border-emerald-500/50 rounded-xl p-6 shadow-lg transition block group">
+                <div class="text-xs uppercase font-semibold text-slate-400 tracking-wider flex justify-between items-center">
+                    Pending Port Cut-Off
+                    <span class="text-amber-400 group-hover:translate-x-1 transition">+</span>
+                </div>
+                <div class="text-3xl font-bold mt-2 text-amber-400">{{ pending_count }}</div>
+                <div class="text-xs text-amber-400 mt-3 font-medium">Register New Container Page →</div>
+            </a>
+
+            <!-- Navigation Pane 3: Spot Quote Calculator -->
+            <a href="{{ url_for('spot_quote_page') }}" class="bg-slate-900 border border-slate-800 hover:border-emerald-500/50 rounded-xl p-6 shadow-lg transition block group">
+                <div class="text-xs uppercase font-semibold text-slate-400 tracking-wider flex justify-between items-center">
+                    Secure Cloud Vaulted Documents
+                    <span class="text-cyan-400 group-hover:translate-x-1 transition">⚡</span>
+                </div>
+                <div class="text-3xl font-bold mt-2 text-white">{{ vault_total }}</div>
+                <div class="text-xs text-cyan-400 mt-3 font-medium">Open Spot Quote Calculator →</div>
+            </a>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left 2 Cols: Containers Table -->
+            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+                <div class="px-6 py-5 border-b border-slate-800 flex justify-between items-center">
+                    <div>
+                        <h2 class="font-bold text-lg text-white">Active Container Cut-Offs</h2>
+                        <p class="text-xs text-slate-400">Real-time CY & documentation deadlines across global terminals</p>
+                    </div>
+                    <a href="{{ url_for('new_container') }}" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow">
+                        + Add Container
+                    </a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
                         <thead>
-                            <tr>
-                                <th>Container ID</th>
-                                <th>Vessel & Route</th>
-                                <th>Terminal Cut-Off</th>
-                                <th>Gate Status</th>
+                            <tr class="bg-slate-800/50 text-slate-400 border-b border-slate-800 text-xs uppercase tracking-wider">
+                                <th class="py-3 px-6 font-semibold">Container ID</th>
+                                <th class="py-3 px-6 font-semibold">Vessel & Route</th>
+                                <th class="py-3 px-6 font-semibold">Terminal Cut-Off</th>
+                                <th class="py-3 px-6 font-semibold">Gate Status</th>
                             </tr>
                         </thead>
-                        <tbody id="shipmentTableBody">
-                            {% for container in containers %}
-                            <tr class="shipment-row" data-status="{{ container.status }}">
-                                <td>
-                                    <span class="container-id">{{ container.id }}</span>
-                                    <div class="booking-sub">{{ container.booking }}</div>
+                        <tbody class="divide-y divide-slate-800/60">
+                            {% for c in containers %}
+                            <tr class="hover:bg-slate-800/30 transition">
+                                <td class="py-4 px-6 font-mono font-medium text-white">
+                                    {{ c.id }}
+                                    <div class="text-xs text-slate-500 font-sans">BK: {{ c.booking }}</div>
                                 </td>
-                                <td>
-                                    <div class="fw-semibold text-white">{{ container.vessel }}</div>
-                                    <div class="mt-1 mb-1" style="font-size: 0.8rem; color: var(--text-secondary);">
-                                        <span>{{ container.pol }}</span>
-                                        <i class="bi bi-arrow-right mx-1" style="color: var(--accent-cyan);"></i>
-                                        <span>{{ container.pod }}</span>
-                                        <span class="ms-2 ps-2 border-start border-secondary" style="font-size: 0.7rem; font-family: monospace;">EDOS: {{ container.edos }}</span>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-2 mt-1" style="font-size: 0.75rem; color: var(--text-muted-custom);">
-                                        {% if 'On Track' in container.loading_status %}
-                                            <span class="pulse-dot" style="width: 6px; height: 6px;"></span>
-                                        {% elif 'Congestion' in container.loading_status or 'Delayed' in container.loading_status %}
-                                            <span class="pulse-dot" style="width: 6px; height: 6px; background-color: #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); animation: pulse-red 2s infinite;"></span>
-                                        {% else %}
-                                            <span class="pulse-dot" style="width: 6px; height: 6px; background-color: #f59e0b; box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); animation: pulse-yellow 2s infinite;"></span>
-                                        {% endif %}
-                                        <span>{{ container.loading_status }}</span>
-                                    </div>
+                                <td class="py-4 px-6 text-slate-300">
+                                    <div class="font-medium text-white">{{ c.vessel }}</div>
+                                    <div class="text-xs text-slate-400">{{ c.pol }} → {{ c.pod }}</div>
                                 </td>
-                                <td>
-                                    <div class="fw-medium text-white">{{ container.cutoff }}</div>
-                                    <span class="small countdown-timer" data-cutoff="{{ container.cutoff }}" style="color: var(--text-secondary);">Calculating...</span>
-                                </td>
-                                <td>
-                                    {% if container.status == 'Cleared to Load' %}
-                                        <span class="badge-status status-cleared">
-                                            <i class="bi bi-check-circle-fill"></i> Cleared to Load
-                                        </span>
-                                    {% elif 'Delayed' in container.status %}
-                                        <span class="badge-status status-urgent">
-                                            <i class="bi bi-exclamation-triangle-fill"></i> {{ container.status }}
-                                        </span>
-                                    {% else %}
-                                        <span class="badge-status status-pending">
-                                            <i class="bi bi-hourglass-split"></i> {{ container.status }}
-                                        </span>
-                                    {% endif %}
+                                <td class="py-4 px-6 text-amber-400 font-mono">{{ c.cutoff }}</td>
+                                <td class="py-4 px-6">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                        {% if c.status == 'Cleared to Load' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                                        {% else %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% endif %}">
+                                        {{ c.status }}
+                                    </span>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -432,383 +121,56 @@
                     </table>
                 </div>
             </div>
-        </div>
 
-        <!-- Right Column: Document Vault -->
-        <div class="col-lg-4">
-            <div class="glass-card p-4 h-100 d-flex flex-column justify-content-between">
+            <!-- Right Col: Document Vault -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl flex flex-col justify-between">
                 <div>
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <h5 class="fw-bold mb-0 text-white"><i class="bi bi-folder2-open me-2 text-info"></i> Document Vault</h5>
-                        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">us-east-1</span>
+                    <div class="flex items-center justify-between mb-2">
+                        <h2 class="font-bold text-lg text-white">Document Vault</h2>
+                        <span class="text-xs bg-cyan-500/10 text-cyan-400 px-2.5 py-1 rounded border border-cyan-500/20 font-mono">us-east-1</span>
                     </div>
-                    <p class="small mb-4" style="color: var(--text-secondary);">
-                        Securely stream Commercial Invoices, Packing Lists, and Bills of Lading directly to the Secure Cloud Vault.
-                    </p>
-                    
-                    <form id="s3UploadForm" action="/upload" method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="upload-dropzone mb-3" id="dropzone">
-                            <input type="file" id="document" name="document" accept=".pdf,.png,.jpg,.jpeg,.xlsx" required>
-                            <i class="bi bi-cloud-arrow-up fs-1" style="color: var(--accent-cyan);"></i>
-                            <div class="fw-semibold text-white mt-2" id="fileNameDisplay">Drop shipping manifest or click to browse</div>
-                            <div class="small mt-1" style="color: var(--text-secondary);">Supports PDF, PNG, JPG, XLSX (Max 25MB)</div>
-                        </div>
+                    <p class="text-xs text-slate-400 mb-6">Securely stream Commercial Invoices and Bills of Lading to Amazon S3.</p>
 
-                        <button type="submit" class="btn btn-glow w-100" id="uploadBtn">
-                            <i class="bi bi-lock-fill me-1"></i> Upload to Secure Cloud Vault
+                    <form id="s3UploadForm" action="/upload" method="POST" enctype="multipart/form-data" class="space-y-4">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="border-2 border-dashed border-slate-700 hover:border-cyan-500 bg-slate-950/50 rounded-xl p-6 text-center cursor-pointer transition relative">
+                            <input type="file" id="document" name="document" accept=".pdf,.png,.jpg,.jpeg,.xlsx" required class="absolute inset-0 opacity-0 cursor-pointer">
+                            <div class="text-cyan-400 text-2xl mb-2">📁</div>
+                            <div class="text-xs font-semibold text-white" id="fileNameDisplay">Drop shipping manifest or click to browse</div>
+                            <div class="text-[10px] text-slate-500 mt-1">Supports PDF, PNG, JPG, XLSX (Max 25MB)</div>
+                        </div>
+                        <button type="submit" id="uploadBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 font-medium py-2.5 rounded-lg transition text-sm">
+                            Upload to Secure Vault
                         </button>
                     </form>
                 </div>
 
-                <!-- Recent Vault Activity Feed -->
-                <div class="mt-4 pt-3 border-top" style="border-color: var(--glass-border) !important;">
-                    <div class="kpi-label mb-2">Recent Secure Cloud Vault Transfers</div>
-                    <div class="d-flex flex-column gap-2" id="vaultActivityList">
+                <div class="mt-6 pt-4 border-t border-slate-800">
+                    <div class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-3">Recent Vault Transfers</div>
+                    <div class="space-y-2" id="vaultActivityList">
                         {% for file in vault_files %}
-                        <div class="vault-item d-flex align-items-center justify-content-between">
-                            <div class="text-truncate pe-2">
-                                <i class="bi bi-file-earmark-pdf text-danger me-2"></i>
-                                <span class="text-light">{{ file.name }}</span>
-                            </div>
-                            <span class="badge bg-success bg-opacity-10 text-success">Synced</span>
+                        <div class="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs flex justify-between items-center">
+                            <span class="text-slate-300 truncate pr-2">{{ file.name }}</span>
+                            <span class="text-emerald-400 font-mono">Synced</span>
                         </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+    </main>
 
-<!-- Modal: Add New Container -->
-<div class="modal fade" id="addShipmentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content glass-card border-secondary border-opacity-25" style="background: #0d1424;">
-            <div class="modal-header border-bottom border-secondary border-opacity-25">
-                <h5 class="modal-title fw-bold text-white">Register Export Container</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="/add_container" method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="modal-body">
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="small fw-semibold mb-1 text-secondary">Container Number</label>
-                            <input type="text" name="id" class="form-control search-input" placeholder="e.g. MAEU8492011" required maxlength="11" pattern="[A-Za-z]{4}[0-9]{7}" title="4 letters followed by 7 digits">
-                        </div>
-                        <div class="col-6">
-                            <label class="small fw-semibold mb-1 text-secondary">Booking Ref</label>
-                            <input type="text" name="booking" class="form-control search-input" placeholder="e.g. BK-5519203" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-semibold mb-1 text-secondary">Mother Vessel Name</label>
-                            <input type="text" name="vessel" class="form-control search-input" placeholder="e.g. ONE Innovation" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="small fw-semibold mb-1 text-secondary">Port of Loading</label>
-                            <input type="text" name="pol" class="form-control search-input" value="USHOU" required maxlength="5" pattern="[A-Za-z]{5}" title="5-letter UN/LOCODE">
-                        </div>
-                        <div class="col-6">
-                            <label class="small fw-semibold mb-1 text-secondary">Port of Discharge</label>
-                            <input type="text" name="pod" class="form-control search-input" value="NLRTM" required maxlength="5" pattern="[A-Za-z]{5}" title="5-letter UN/LOCODE">
-                        </div>
-                        <div class="col-7">
-                            <label class="small fw-semibold mb-1 text-secondary">CY Cut-Off Date & Time</label>
-                            <input type="datetime-local" name="cutoff" class="form-control search-input" required>
-                        </div>
-                        <div class="col-5">
-                            <label class="small fw-semibold mb-1 text-secondary">Initial Status</label>
-                            <select name="status" class="form-control search-input">
-                                <option value="Pending Export Description">Pending Export Description</option>
-                                <option value="Cleared to Load">Cleared to Load</option>
-                                <option value="Vessel Arrival Delayed">Vessel Arrival Delayed</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-top border-secondary border-opacity-25">
-                    <button type="submit" class="btn btn-glow w-100">Add to Active Watchlist</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Spot Rate Estimator -->
-<div class="modal fade" id="quoteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content glass-card border-secondary border-opacity-25" style="background: #0d1424;">
-            <div class="modal-header border-bottom border-secondary border-opacity-25">
-                <h5 class="modal-title fw-bold text-white"><i class="bi bi-calculator me-2" style="color: var(--accent-cyan);"></i>Spot Rate Estimator</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="quoteForm">
-                    <div class="row g-3 mb-4">
-                        <div class="col-6">
-                            <label class="small fw-semibold mb-1 text-secondary">Origin (POL)</label>
-                            <select id="quotePol" class="form-control search-input">
-                                <option value="USHOU">USHOU (Houston)</option>
-                                <option value="USMIA">USMIA (Miami)</option>
-                                <option value="USSAV">USSAV (Savannah)</option>
-                                <option value="USLAX">USLAX (Los Angeles)</option>
-                                <option value="USNYC">USNYC (New York)</option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="small fw-semibold mb-1 text-secondary">Destination (POD)</label>
-                            <select id="quotePod" class="form-control search-input">
-                                <option value="NLRTM">NLRTM (Rotterdam)</option>
-                                <option value="DEHAM">DEHAM (Hamburg)</option>
-                                <option value="SGSIN">SGSIN (Singapore)</option>
-                                <option value="CNSHA">CNSHA (Shanghai)</option>
-                                <option value="AEJEA">AEJEA (Dubai-Jebel Ali)</option>
-                                <option value="INBOM">INBOM (Mumbai)</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="small fw-semibold mb-1 text-secondary">Equipment Size</label>
-                            <select id="quoteEq" class="form-control search-input">
-                                <option value="40HC">40' High Cube (Standard)</option>
-                                <option value="20DC">20' Dry Container</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-glow w-100 mb-3" id="calcBtn">Calculate Freight Cost</button>
-                </form>
-
-                <div id="quoteError" class="alert alert-danger d-none py-2 small" role="alert"></div>
-
-                <!-- Hidden Result Card -->
-                <div id="quoteResult" class="d-none p-3 rounded-3 border" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.3) !important;">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="small text-secondary text-uppercase fw-bold">Estimated Total</span>
-                        <span class="badge bg-success bg-opacity-25 text-success" id="resValid">Valid this month</span>
-                    </div>
-                    <div class="fs-1 fw-bold text-white mb-3" id="resTotal">--</div>
-                    
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Ocean Base Rate:</span> <span id="resBase" class="fw-semibold text-white">--</span>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary mb-1">
-                        <span>Bunker Surcharge (BAF):</span> <span id="resBaf" class="fw-semibold text-white">--</span>
-                    </div>
-                    <div class="d-flex justify-content-between small text-secondary">
-                        <span>Terminal Handling (THC):</span> <span id="resThc" class="fw-semibold text-white">--</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Toast Notification for S3 Uploads -->
-<div class="toast-container position-fixed bottom-0 end-0 p-4">
-    <div id="s3Toast" class="toast align-items-center border-0" role="alert" style="background: #0f172a; border: 1px solid rgba(0,242,254,0.3) !important; border-radius: 12px;">
-        <div class="d-flex p-2">
-            <div class="toast-body d-flex align-items-center gap-2 text-white" id="s3ToastBody">
-                <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                <span>File uploaded to Secure Cloud!</span>
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    const CSRF_TOKEN = JSON.parse('{{ csrf_token()|tojson }}');
-
-    // 1. Live Cut-Off Countdown (refreshes every 30s)
-    function updateCountdowns() {
-        const now = new Date();
-        document.querySelectorAll('.countdown-timer').forEach(el => {
-            const target = new Date(el.dataset.cutoff.replace(' ', 'T'));
-            if (isNaN(target)) return;
-            const diffMs = target - now;
-            el.replaceChildren();
-            const icon = document.createElement('i');
-            if (diffMs <= 0) {
-                icon.className = 'bi bi-slash-circle me-1';
-                const label = document.createElement('span');
-                label.className = 'text-danger fw-semibold';
-                label.append(icon, 'Gate Closed');
-                el.append(label);
-            } else {
-                const days = Math.floor(diffMs / 86400000);
-                const hours = Math.floor((diffMs / 3600000) % 24);
-                icon.className = 'bi bi-stopwatch me-1 text-info';
-                el.append(icon, `${days}d ${hours}h remaining`);
-            }
-        });
-    }
-    updateCountdowns();
-    setInterval(updateCountdowns, 30000);
-
-    // Toast helper
-    const toastEl = document.getElementById('s3Toast');
-    const toastBody = document.getElementById('s3ToastBody');
-    const bsToast = new bootstrap.Toast(toastEl);
-    function showToast(ok, message) {
-        const icon = document.createElement('i');
-        icon.className = ok ? 'bi bi-check-circle-fill text-success fs-5'
-                            : 'bi bi-exclamation-octagon-fill text-danger fs-5';
-        const text = document.createElement('span');
-        text.textContent = message;
-        toastBody.replaceChildren(icon, text);
-        bsToast.show();
-    }
-
-    // 2. File selection label + drag & drop styling
-    const DROP_LABEL = 'Drop shipping manifest or click to browse';
-    const fileInput = document.getElementById('document');
-    const fileNameDisplay = document.getElementById('fileNameDisplay');
-    const dropzone = document.getElementById('dropzone');
-    if (fileInput) {
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                const icon = document.createElement('i');
-                icon.className = 'bi bi-file-earmark-check me-1';
-                const label = document.createElement('span');
-                label.className = 'text-info';
-                label.append(icon, fileInput.files[0].name);
-                fileNameDisplay.replaceChildren(label);
-            }
-        });
-        ['dragenter', 'dragover'].forEach(evt =>
-            dropzone.addEventListener(evt, () => dropzone.classList.add('dragover')));
-        ['dragleave', 'drop'].forEach(evt =>
-            dropzone.addEventListener(evt, () => dropzone.classList.remove('dragover')));
-    }
-
-    // 3. AJAX S3 upload
-    const uploadForm = document.getElementById('s3UploadForm');
-    if (uploadForm) {
-        const uploadBtn = document.getElementById('uploadBtn');
-        const MAX_BYTES = 25 * 1024 * 1024;
-        const BTN_HTML = '<i class="bi bi-lock-fill me-1"></i> Upload to Secure Cloud';
-
-        uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const file = fileInput.files[0];
-            if (file && file.size > MAX_BYTES) {
-                showToast(false, 'File too large (max 25 MB)');
-                return;
-            }
-            uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Encrypting to Secure Cloud...';
-
-            try {
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': CSRF_TOKEN },
-                    body: new FormData(uploadForm)
-                });
-                let result;
-                try { result = await response.json(); }
-                catch { result = { success: false, message: `Upload failed (HTTP ${response.status})` }; }
-
-                if (response.ok && result.success) {
-                    showToast(true, result.message);
-
-                    const list = document.getElementById('vaultActivityList');
-                    const item = document.createElement('div');
-                    item.className = 'vault-item d-flex align-items-center justify-content-between';
-                    const left = document.createElement('div');
-                    left.className = 'text-truncate pe-2';
-                    const icon = document.createElement('i');
-                    icon.className = 'bi bi-file-earmark-lock2 text-info me-2';
-                    const name = document.createElement('span');
-                    name.className = 'text-light';
-                    name.textContent = result.filename;
-                    left.append(icon, name);
-                    const badge = document.createElement('span');
-                    badge.className = 'badge bg-success bg-opacity-10 text-success';
-                    badge.textContent = 'Synced';
-                    item.append(left, badge);
-                    list.prepend(item);
-
-                    const vaultCount = document.getElementById('vaultCount');
-                    vaultCount.textContent = parseInt(vaultCount.textContent, 10) + 1;
-                    uploadForm.reset();
-                    fileNameDisplay.textContent = DROP_LABEL;
-                } else {
-                    showToast(false, result.message || 'Upload failed');
+    <!-- Upload AJAX Script -->
+    <script>
+        const fileInput = document.getElementById('document');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        if (fileInput) {
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    fileNameDisplay.textContent = fileInput.files[0].name;
                 }
-            } catch (err) {
-                showToast(false, 'Network error. Please try again.');
-            } finally {
-                uploadBtn.disabled = false;
-                uploadBtn.innerHTML = BTN_HTML;
-            }
-        });
-    }
-
-    // 4. Instant search filter
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            const filter = this.value.toLowerCase();
-            document.querySelectorAll('.shipment-row').forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
             });
-        });
-    }
-
-    // 5. Spot rate quote
-    const quoteForm = document.getElementById('quoteForm');
-    if (quoteForm) {
-        const quoteError = document.getElementById('quoteError');
-        const quoteResult = document.getElementById('quoteResult');
-
-        quoteForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const btn = document.getElementById('calcBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Pinging Carriers...';
-            quoteError.classList.add('d-none');
-
-            const payload = {
-                pol: document.getElementById('quotePol').value,
-                pod: document.getElementById('quotePod').value,
-                equipment: document.getElementById('quoteEq').value
-            };
-
-            try {
-                const response = await fetch('/api/quote', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
-                    body: JSON.stringify(payload)
-                });
-                let data;
-                try { data = await response.json(); }
-                catch { data = { success: false, message: `Quote failed (HTTP ${response.status})` }; }
-
-                if (response.ok && data.success) {
-                    document.getElementById('resTotal').textContent = data.total;
-                    document.getElementById('resBase').textContent = data.base_rate;
-                    document.getElementById('resBaf').textContent = data.baf_surcharge;
-                    document.getElementById('resThc').textContent = data.thc_surcharge;
-                    document.getElementById('resValid').textContent = 'Valid until ' + data.valid_until_label;
-                    quoteResult.classList.remove('d-none');
-                } else {
-                    quoteResult.classList.add('d-none');
-                    quoteError.textContent = data.message || 'Could not calculate a quote.';
-                    quoteError.classList.remove('d-none');
-                }
-            } catch (err) {
-                quoteResult.classList.add('d-none');
-                quoteError.textContent = 'Network error. Please try again.';
-                quoteError.classList.remove('d-none');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Calculate Freight Cost';
-            }
-        });
-    }
-</script>
-
+        }
+    </script>
 </body>
 </html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Container Registration | Ocean Tracker OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+    
+    <!-- Top Navigation Bar -->
+    <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="h-3 w-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span class="font-bold text-lg tracking-wider text-white">OCEAN TRACKER OS</span>
+            </div>
+            <div class="flex space-x-6 text-sm items-center">
+                <a href="{{ url_for('dashboard') }}" class="text-slate-400 hover:text-white transition">Dashboard</a>
+                <a href="{{ url_for('port_data_feed') }}" class="text-slate-400 hover:text-white transition">Live Port Telemetry</a>
+                <a href="{{ url_for('spot_quote_page') }}" class="text-slate-400 hover:text-white transition">Spot Quote Calculator</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container Form Layout -->
+    <main class="max-w-3xl mx-auto px-6 py-12">
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold tracking-tight">Register Export Container</h1>
+            <p class="text-sm text-slate-400 mt-1">Submit container identification, booking reference, and terminal cut-off schedules.</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mb-6 space-y-2">
+              {% for category, message in messages %}
+                <div class="p-4 rounded-lg text-sm border {% if category == 'error' %}bg-red-950/50 border-red-800 text-red-200{% else %}bg-emerald-950/50 border-emerald-800 text-emerald-200{% endif %}">
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-xl">
+            <form action="{{ url_for('new_container') }}" method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs uppercase font-semibold text-slate-400 mb-2">Container Number (ISO 6346)</label>
+                        <input type="text" name="id" placeholder="e.g. MAEU8492011" required maxlength="11" pattern="[A-Za-z]{4}[0-9]{7}" 
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase font-semibold text-slate-400 mb-2">Booking Reference</label>
+                        <input type="text" name="booking" placeholder="e.g. BK-5519203" required 
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs uppercase font-semibold text-slate-400 mb-2">Mother Vessel Name</label>
+                    <input type="text" name="vessel" placeholder="e.g. CMA CGM JACQUES SAADE" required 
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs uppercase font-semibold text-slate-400 mb-2">Port of Loading (UN/LOCODE)</label>
+                        <input type="text" name="pol" value="USHOU" required maxlength="5" pattern="[A-Za-z]{5}" 
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase font-semibold text-slate-400 mb-2">Port of Discharge (UN/LOCODE)</label>
+                        <input type="text" name="pod" value="NLRTM" required maxlength="5" pattern="[A-Za-z]{5}" 
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs uppercase font-semibold text-slate-400 mb-2">CY Gate Cut-Off Date & Time</label>
+                        <input type="datetime-local" name="cutoff" required 
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase font-semibold text-slate-400 mb-2">Initial Gate Status</label>
+                        <select name="status" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <option value="Pending Export Description">Pending Export Description</option>
+                            <option value="Cleared to Load">Cleared to Load</option>
+                            <option value="Vessel Arrival Delayed">Vessel Arrival Delayed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-4 pt-4 border-t border-slate-800">
+                    <a href="{{ url_for('dashboard') }}" class="px-5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition">Cancel</a>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-6 py-2.5 rounded-lg transition shadow-lg text-sm">
+                        Commit to Watchlist
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>
