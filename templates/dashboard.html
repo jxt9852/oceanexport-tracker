@@ -69,33 +69,6 @@
             box-shadow: 0 0 20px rgba(0, 242, 254, 0.35);
         }
 
-        .status-pill {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-            color: #34d399;
-            font-size: 0.78rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 999px;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-        }
-
-        .pulse-dot {
-            width: 7px;
-            height: 7px;
-            background-color: #10b981;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #10b981;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.45; transform: scale(1.2); }
-        }
-
         /* Glass Cards */
         .glass-card {
             background: var(--glass-surface);
@@ -291,7 +264,6 @@
             font-size: 0.82rem;
         }
 
-        /* Telemetry Animations */
         @keyframes pulse-red {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
             70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
@@ -306,14 +278,18 @@
 </head>
 <body>
 
-<!-- Top Navigation -->
+<!-- Top Navigation with Navigation Panes -->
 <nav class="navbar navbar-glass py-3 mb-4 sticky-top">
     <div class="container">
-        <a class="brand-logo" href="#">
+        <a class="brand-logo" href="{{ url_for('dashboard') }}">
             <span class="brand-icon"><i class="bi bi-tsunami"></i></span>
             <span>OceanTracker <span style="font-weight:400; color: var(--accent-cyan);">OS</span></span>
         </a>
         <div class="d-flex align-items-center gap-3">
+            <!-- Navigation Pane Link to Live Port Telemetry -->
+            <a href="{{ url_for('port_data_feed') }}" class="btn btn-sm btn-outline-info rounded-3 px-3 py-2 text-decoration-none">
+                <i class="bi bi-water me-1"></i> Live Port Telemetry
+            </a>
             <button class="btn btn-sm btn-outline-light rounded-3 px-3 py-2" data-bs-toggle="modal" data-bs-target="#addShipmentModal">
                 <i class="bi bi-plus-lg me-1"></i> New Container
             </button>
@@ -339,22 +315,25 @@
         {% endfor %}
     {% endwith %}
 
-    <!-- Top Row: Executive KPI Metrics -->
+    <!-- Top Row: Executive KPI Metrics with Interactive Navigation Pane -->
     <div class="row g-3 mb-4">
         <div class="col-md-4">
-            <div class="glass-card kpi-card d-flex align-items-center justify-content-between">
-                <div>
-                    <div class="kpi-label">Active Export Units</div>
-                    <div class="kpi-value" id="totalCount">{{ containers|length }}</div>
-                    <div class="small mt-1" style="color: #34d399;"><i class="bi bi-arrow-up-right"></i> Live Port Telemetry</div>
+            <!-- Clickable KPI Card acting as a Navigation Pane to Live Port Telemetry -->
+            <a href="{{ url_for('port_data_feed') }}" class="text-decoration-none">
+                <div class="glass-card kpi-card d-flex align-items-center justify-content-between h-100" style="cursor: pointer;">
+                    <div>
+                        <div class="kpi-label">Active Export Units</div>
+                        <div class="kpi-value" id="totalCount">{{ containers|length }}</div>
+                        <div class="small mt-1 text-info fw-semibold"><i class="bi bi-arrow-up-right me-1"></i> Open Live Port Telemetry Feed &rarr;</div>
+                    </div>
+                    <div class="kpi-icon" style="background: rgba(79, 172, 254, 0.15); color: var(--accent-blue);">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
                 </div>
-                <div class="kpi-icon" style="background: rgba(79, 172, 254, 0.15); color: var(--accent-blue);">
-                    <i class="bi bi-box-seam"></i>
-                </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-4">
-            <div class="glass-card kpi-card d-flex align-items-center justify-content-between">
+            <div class="glass-card kpi-card d-flex align-items-center justify-content-between h-100">
                 <div>
                     <div class="kpi-label">Pending Port Cut-Off</div>
                     <div class="kpi-value" id="pendingCount">{{ pending_count }}</div>
@@ -366,7 +345,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="glass-card kpi-card d-flex align-items-center justify-content-between">
+            <div class="glass-card kpi-card d-flex align-items-center justify-content-between h-100">
                 <div>
                     <div class="kpi-label">Secure Cloud Vaulted Documents</div>
                     <div class="kpi-value" id="vaultCount">{{ vault_total }}</div>
@@ -455,12 +434,12 @@
             </div>
         </div>
 
-        <!-- Right Column:  Document Vault -->
+        <!-- Right Column: Document Vault -->
         <div class="col-lg-4">
             <div class="glass-card p-4 h-100 d-flex flex-column justify-content-between">
                 <div>
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <h5 class="fw-bold mb-0 text-white"> Document Vault</h5>
+                        <h5 class="fw-bold mb-0 text-white"><i class="bi bi-folder2-open me-2 text-info"></i> Document Vault</h5>
                         <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">us-east-1</span>
                     </div>
                     <p class="small mb-4" style="color: var(--text-secondary);">
@@ -576,7 +555,8 @@
                                 <option value="USLAX">USLAX (Los Angeles)</option>
                                 <option value="USNYC">USNYC (New York)</option>
                             </select>
-                            ...
+                        </div>
+                        <div class="col-6">
                             <label class="small fw-semibold mb-1 text-secondary">Destination (POD)</label>
                             <select id="quotePod" class="form-control search-input">
                                 <option value="NLRTM">NLRTM (Rotterdam)</option>
@@ -586,8 +566,8 @@
                                 <option value="AEJEA">AEJEA (Dubai-Jebel Ali)</option>
                                 <option value="INBOM">INBOM (Mumbai)</option>
                             </select>
-                                </div>
-                                <div class="col-12">
+                        </div>
+                        <div class="col-12">
                             <label class="small fw-semibold mb-1 text-secondary">Equipment Size</label>
                             <select id="quoteEq" class="form-control search-input">
                                 <option value="40HC">40' High Cube (Standard)</option>
@@ -667,7 +647,7 @@
     updateCountdowns();
     setInterval(updateCountdowns, 30000);
 
-    // Toast helper (all text is inserted as text, never as HTML)
+    // Toast helper
     const toastEl = document.getElementById('s3Toast');
     const toastBody = document.getElementById('s3ToastBody');
     const bsToast = new bootstrap.Toast(toastEl);
