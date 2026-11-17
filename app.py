@@ -164,11 +164,26 @@ def dashboard():
         connection = get_db_connection()
         try:
             with connection.cursor() as cursor:
+                # FIXED: Auto-create the containers table if it doesn't exist yet on the new RDS instance
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS containers (
+                        id VARCHAR(20) PRIMARY KEY,
+                        booking VARCHAR(50),
+                        vessel VARCHAR(100),
+                        pol VARCHAR(5),
+                        pod VARCHAR(5),
+                        cutoff DATETIME,
+                        status VARCHAR(100),
+                        edos VARCHAR(50),
+                        loading_status VARCHAR(100)
+                    )
+                """)
+                connection.commit()
                 cursor.execute("SELECT * FROM containers ORDER BY cutoff ASC;")
                 containers = cursor.fetchall()
         finally:
             connection.close()
-    except pymysql.MySQLError:
+    except pymysql.MySQLError as e:
         db_error = "Live container data is temporarily unavailable."
 
     vault_files, vault_total = list_vault_files()
@@ -222,7 +237,6 @@ def new_container():
         pod = form.get("pod", "").strip().upper()
         status = form.get("status", "Pending Export Description")
         
-        # parse cutoff
         raw_cutoff = form.get("cutoff", "")
         cutoff_dt = None
         for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M"):
